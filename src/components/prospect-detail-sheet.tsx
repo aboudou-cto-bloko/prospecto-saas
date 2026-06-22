@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { X, Save, MessageCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Save, MessageCircle, Loader2 } from "lucide-react";
 import { updateProspect } from "@/actions/prospects";
 import { getCustomFields } from "@/actions/custom-fields";
 import { generateWhatsAppLink } from "@/lib/template";
@@ -59,11 +60,19 @@ export function ProspectDetailSheet({ prospect, onClose }: Props) {
 
   return (
     <>
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className="fixed inset-0 z-40 bg-black/50"
         onClick={onClose}
       />
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-hairline bg-surface-1">
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-hairline bg-surface-1">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-hairline px-6 py-4">
           <h2 className="text-lg font-semibold tracking-card-title text-ink">
@@ -160,7 +169,7 @@ export function ProspectDetailSheet({ prospect, onClose }: Props) {
             disabled={isPending}
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
           >
-            <Save className="h-4 w-4" />
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             {isPending ? "Sauvegarde…" : "Sauvegarder"}
           </button>
           <a
@@ -173,7 +182,7 @@ export function ProspectDetailSheet({ prospect, onClose }: Props) {
             WhatsApp
           </a>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }

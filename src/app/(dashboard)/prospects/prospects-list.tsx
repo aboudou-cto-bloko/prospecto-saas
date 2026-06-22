@@ -24,6 +24,7 @@ import {
   X,
   Upload,
 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TagBadge } from "@/components/tag-badge";
@@ -126,9 +127,11 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
   }
 
   async function handleStatusChange(id: string, status: string) {
+    const label = STATUS_LABELS[status]?.label ?? status;
     startTransition(async () => {
       try {
         await updateProspectStatus(id, status as "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "LOST");
+        toast.success(`Statut changé → ${label}`);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erreur");
       }
@@ -165,17 +168,23 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
     try {
       const raw = prospect.tags;
       if (Array.isArray(raw)) return raw as string[];
+      if (typeof raw === "string") {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed as string[];
+      }
       return [];
     } catch { return []; }
   }
 
   async function handleToggleTag(prospectId: string, tagName: string, currentTags: string[]) {
-    const newTags = currentTags.includes(tagName)
+    const removing = currentTags.includes(tagName);
+    const newTags = removing
       ? currentTags.filter((t) => t !== tagName)
       : [...currentTags, tagName];
     startTransition(async () => {
       try {
         await updateProspectTags(prospectId, newTags);
+        toast.success(removing ? `Tag "${tagName}" retiré` : `Tag "${tagName}" ajouté`);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erreur");
       }
@@ -438,15 +447,15 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
         </div>
       )}
 
-      {/* Prospect detail sheet */}
-      {detailProspect && (
-        <ProspectDetailSheet
-          prospect={detailProspect}
-          onClose={() => setDetailProspect(null)}
-        />
-      )}
+      <AnimatePresence>
+        {detailProspect && (
+          <ProspectDetailSheet
+            prospect={detailProspect}
+            onClose={() => setDetailProspect(null)}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Import CSV dialog */}
       {showImport && (
         <ImportCsvDialog onClose={() => setShowImport(false)} />
       )}

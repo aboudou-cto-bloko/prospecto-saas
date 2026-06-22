@@ -120,7 +120,7 @@ export async function updateProspectTags(id: string, tags: string[]) {
 
   await prisma.prospect.update({
     where: { id, organizationId },
-    data: { tags: JSON.stringify(tags) },
+    data: { tags },
   });
 
   revalidatePath("/prospects");
