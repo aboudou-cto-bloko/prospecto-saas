@@ -8,17 +8,30 @@ import {
   Marker,
 } from "react-simple-maps";
 import { motion, AnimatePresence } from "framer-motion";
-import { COUNTRIES, COVERED_COUNTRY_CODES, type AfricaCity, type AfricaCountry } from "@/lib/africa-cities";
+import { COUNTRIES, type AfricaCity, type AfricaCountry } from "@/lib/africa-cities";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-const AFRICA_CODES = [
-  "DZA","AGO","BEN","BWA","BFA","BDI","CMR","CPV","CAF","TCD","COM",
-  "COG","COD","CIV","DJI","EGY","GNQ","ERI","SWZ","ETH","GAB","GMB",
-  "GHA","GIN","GNB","KEN","LSO","LBR","LBY","MDG","MWI","MLI","MRT",
-  "MUS","MAR","MOZ","NAM","NER","NGA","RWA","STP","SEN","SYC","SLE",
-  "SOM","ZAF","SSD","SDN","TZA","TGO","TUN","UGA","ZMB","ZWE",
+// Numeric ISO codes for all African countries (world-atlas uses these as `id`)
+const AFRICA_IDS = [
+  "012","024","072","108","120","140","148","174","178","180","204","226",
+  "231","232","262","266","270","288","324","384","404","426","430","434",
+  "450","454","466","478","504","508","516","562","566","624","646","686",
+  "694","706","710","716","728","729","732","748","768","788","800","834",
+  "854","894",
 ];
+
+// Map ISO alpha-3 → numeric for our covered countries
+const COVERED_NUMERIC: Record<string, string> = {
+  BEN: "204", TGO: "768", CIV: "384", SEN: "686", CMR: "120",
+  BFA: "854", MLI: "466", NER: "562", GIN: "324", GAB: "266",
+  COG: "178", COD: "180", MDG: "450", TCD: "148", MRT: "478",
+};
+
+const NUMERIC_TO_ALPHA: Record<string, string> = {};
+for (const [alpha, num] of Object.entries(COVERED_NUMERIC)) {
+  NUMERIC_TO_ALPHA[num] = alpha;
+}
 
 type Props = {
   selectedCountry: AfricaCountry | null;
@@ -33,13 +46,16 @@ export function AfricaMap({
   onSelectCountry,
   onSelectCity,
 }: Props) {
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const countryByCode = useMemo(() => {
+  const countryByAlpha = useMemo(() => {
     const map = new Map<string, AfricaCountry>();
     for (const c of COUNTRIES) map.set(c.code, c);
     return map;
   }, []);
+
+  const coveredIds = useMemo(() => new Set(Object.values(COVERED_NUMERIC)), []);
+  const selectedNumericId = selectedCountry ? COVERED_NUMERIC[selectedCountry.code] : null;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-hairline bg-[#080810]">
@@ -56,23 +72,26 @@ export function AfricaMap({
         <Geographies geography={GEO_URL}>
           {({ geographies }) =>
             geographies
-              .filter((geo) => AFRICA_CODES.includes(String(geo.properties.ISO_A3 ?? geo.id)))
+              .filter((geo) => AFRICA_IDS.includes(geo.id))
               .map((geo) => {
-                const code = (geo.properties.ISO_A3 ?? geo.id) as string;
-                const isCovered = COVERED_COUNTRY_CODES.includes(code);
-                const isHovered = hoveredCountry === code;
-                const isSelected = selectedCountry?.code === code;
+                const numId = geo.id;
+                const isCovered = coveredIds.has(numId);
+                const isHovered = hoveredId === numId;
+                const isSelected = selectedNumericId === numId;
 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
                     onClick={() => {
-                      const c = countryByCode.get(code);
-                      if (c) onSelectCountry(c);
+                      const alpha = NUMERIC_TO_ALPHA[numId];
+                      if (alpha) {
+                        const c = countryByAlpha.get(alpha);
+                        if (c) onSelectCountry(c);
+                      }
                     }}
-                    onMouseEnter={() => setHoveredCountry(code)}
-                    onMouseLeave={() => setHoveredCountry(null)}
+                    onMouseEnter={() => setHoveredId(numId)}
+                    onMouseLeave={() => setHoveredId(null)}
                     style={{
                       default: {
                         fill: isSelected
@@ -145,11 +164,11 @@ export function AfricaMap({
           })}
         </AnimatePresence>
 
-        {/* Glow on hovered covered country */}
-        {hoveredCountry && countryByCode.has(hoveredCountry) && !selectedCountry && (
+        {/* Hovered country label */}
+        {hoveredId && NUMERIC_TO_ALPHA[hoveredId] && !selectedCountry && (
           <Marker coordinates={[
-            countryByCode.get(hoveredCountry)!.lng,
-            countryByCode.get(hoveredCountry)!.lat
+            countryByAlpha.get(NUMERIC_TO_ALPHA[hoveredId])!.lng,
+            countryByAlpha.get(NUMERIC_TO_ALPHA[hoveredId])!.lat
           ]}>
             <text
               textAnchor="middle"
@@ -160,7 +179,7 @@ export function AfricaMap({
                 pointerEvents: "none",
               }}
             >
-              {countryByCode.get(hoveredCountry)!.name}
+              {countryByAlpha.get(NUMERIC_TO_ALPHA[hoveredId])!.name}
             </text>
           </Marker>
         )}
