@@ -1,26 +1,142 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Linear-inspired Dark Design System ── */
+
+  /* Canvas & Surfaces */
+  --canvas: 240 20% 1%;
+  --surface-1: 225 10% 10%;
+  --surface-2: 225 8% 14%;
+  --surface-3: 225 6% 18%;
+  --surface-4: 225 5% 22%;
+
+  /* Hairlines */
+  --hairline: 225 8% 16%;
+  --hairline-strong: 225 6% 24%;
+  --hairline-tertiary: 225 5% 20%;
+
+  /* Text */
+  --ink: 210 14% 97%;
+  --ink-muted: 216 18% 85%;
+  --ink-subtle: 217 6% 57%;
+  --ink-tertiary: 220 4% 40%;
+
+  /* Brand — Lavender-blue */
+  --primary: 235 52% 60%;
+  --primary-hover: 233 100% 76%;
+  --primary-focus: 235 51% 59%;
+  --on-primary: 0 0% 100%;
+
+  /* Semantic */
+  --success: 146 62% 40%;
+  --destructive: 0 72% 51%;
+  --warning: 38 92% 50%;
+
+  /* Inverse (rare) */
+  --inverse-canvas: 0 0% 100%;
+  --inverse-ink: 0 0% 0%;
+
+  /* ── shadcn mappings ── */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--surface-1);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--ink);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-subtle);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--ink);
+  --border: var(--hairline);
+  --input: var(--hairline-strong);
+  --ring: var(--primary);
+  --sidebar-background: var(--surface-1);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--primary);
+
+  /* Radius */
+  --radius: 0.5rem;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--on-primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-secondary: hsl(var(--surface-2));
+  --color-secondary-foreground: hsl(var(--ink));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-ink: hsl(var(--ink));
+  --color-ink-muted: hsl(var(--ink-muted));
+  --color-ink-subtle: hsl(var(--ink-subtle));
+  --color-ink-tertiary: hsl(var(--ink-tertiary));
+  --color-canvas: hsl(var(--canvas));
+  --color-surface-1: hsl(var(--surface-1));
+  --color-surface-2: hsl(var(--surface-2));
+  --color-surface-3: hsl(var(--surface-3));
+  --color-surface-4: hsl(var(--surface-4));
+  --color-hairline: hsl(var(--hairline));
+  --color-hairline-strong: hsl(var(--hairline-strong));
+  --color-sidebar-background: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans: "Inter", "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: hsl(var(--canvas));
+  color: hsl(var(--ink));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Linear typography tracking ── */
+.tracking-display-xl { letter-spacing: -3px; }
+.tracking-display-lg { letter-spacing: -1.8px; }
+.tracking-display-md { letter-spacing: -1px; }
+.tracking-headline { letter-spacing: -0.6px; }
+.tracking-card-title { letter-spacing: -0.4px; }
+.tracking-subhead { letter-spacing: -0.2px; }
+.tracking-body-lg { letter-spacing: -0.1px; }
+.tracking-body { letter-spacing: -0.05px; }
+.tracking-eyebrow { letter-spacing: 0.4px; }
