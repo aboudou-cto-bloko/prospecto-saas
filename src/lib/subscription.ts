@@ -11,10 +11,10 @@ export async function getSubscription(organizationId: string) {
   });
 }
 
-export async function createSubscription(organizationId: string, plan: PlanId = "starter") {
+export async function createSubscription(organizationId: string, plan: PlanId = "free") {
   const now = new Date();
   const periodEnd = new Date(now);
-  periodEnd.setDate(periodEnd.getDate() + 14);
+  periodEnd.setDate(periodEnd.getDate() + (plan === "free" ? 365 * 10 : 14));
 
   return prisma.subscription.create({
     data: {

@@ -1,7 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Megaphone, TrendingUp, UserPlus } from "lucide-react";
+import { Users, Megaphone, TrendingUp, UserPlus, Zap } from "lucide-react";
+import { UsageBar } from "@/components/upgrade-prompt";
+import { getNextPlan } from "@/lib/plans";
+import Link from "next/link";
 
 type Stats = {
   totalProspects: number;
@@ -41,13 +44,11 @@ export function DashboardContent({ stats }: { stats: Stats }) {
     { label: "Taux de conversion", value: `${stats.conversionRate}%`, icon: TrendingUp },
   ];
 
-  const usageItems = [
-    { label: "Crédits scraping", used: stats.usage.usage.scrapingCreditsUsed, max: stats.usage.usage.scrapingCreditsTotal || stats.usage.limits.scrapingCredits },
-    { label: "Prospects", used: stats.usage.usage.prospects, max: stats.usage.limits.prospects },
-    { label: "Campagnes", used: stats.usage.usage.campaigns, max: stats.usage.limits.campaigns },
-    { label: "Messages/mois", used: stats.usage.usage.messagesThisMonth, max: stats.usage.limits.messagesPerMonth },
-    { label: "Membres", used: stats.usage.usage.members, max: stats.usage.limits.members },
-  ];
+  const plan = stats.usage.plan;
+  const nextPlan = getNextPlan(plan);
+  const creditsMax = stats.usage.usage.scrapingCreditsTotal || stats.usage.limits.scrapingCredits;
+  const creditsUsed = stats.usage.usage.scrapingCreditsUsed;
+  const creditsPercent = creditsMax > 0 ? (creditsUsed / creditsMax) * 100 : 0;
 
   return (
     <div>
@@ -68,14 +69,50 @@ export function DashboardContent({ stats }: { stats: Stats }) {
         Vue d&apos;ensemble de ton activité
       </motion.p>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Plan banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="mt-6 flex items-center justify-between rounded-lg border border-hairline bg-surface-1 px-5 py-3"
+      >
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-semibold uppercase text-primary">
+            {plan}
+          </span>
+          <span className="text-sm text-ink-subtle">
+            {isFinite(creditsMax) ? (
+              <>
+                <span className={creditsPercent > 80 ? "font-medium text-warning" : "text-ink"}>
+                  {creditsUsed}
+                </span>
+                {" / "}{creditsMax} crédits
+              </>
+            ) : (
+              "Crédits illimités"
+            )}
+          </span>
+        </div>
+        {nextPlan && nextPlan.price > 0 && (
+          <Link
+            href="/settings/billing"
+            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-primary-hover hover:scale-[1.02]"
+          >
+            <Zap className="h-3 w-3" />
+            Upgrade → {nextPlan.name}
+          </Link>
+        )}
+      </motion.div>
+
+      {/* Stat cards */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card, i) => (
           <motion.div
             key={card.label}
             initial="hidden"
             animate="visible"
             variants={cardVariants}
-            transition={{ delay: i * 0.08, duration: 0.4 }}
+            transition={{ delay: 0.2 + i * 0.08, duration: 0.4 }}
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
             className="rounded-lg border border-hairline bg-surface-1 p-5"
           >
@@ -86,7 +123,7 @@ export function DashboardContent({ stats }: { stats: Stats }) {
             <motion.p
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 + i * 0.08, type: "spring", stiffness: 200 }}
+              transition={{ delay: 0.3 + i * 0.08, type: "spring", stiffness: 200 }}
               className="mt-2 text-2xl font-semibold tracking-headline text-ink"
             >
               {card.value}
@@ -95,50 +132,93 @@ export function DashboardContent({ stats }: { stats: Stats }) {
         ))}
       </div>
 
+      {/* Usage section */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        className="mt-8 rounded-lg border border-hairline bg-surface-1 p-6"
+        transition={{ delay: 0.5, duration: 0.4 }}
+        className="mt-6 rounded-lg border border-hairline bg-surface-1 p-6"
       >
-        <h2 className="text-lg font-semibold tracking-card-title text-ink">
-          Utilisation du plan
-        </h2>
-        <p className="mt-1 text-sm text-ink-subtle">
-          Plan actuel : <span className="capitalize text-ink">{stats.usage.plan}</span>
-        </p>
-        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
-          {usageItems.map((item, i) => {
-            const percent = isFinite(item.max) && item.max > 0
-              ? Math.min((item.used / item.max) * 100, 100)
-              : 0;
-            const isWarning = percent > 80;
-            return (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 + i * 0.06 }}
-              >
-                <p className="text-xs text-ink-subtle">{item.label}</p>
-                <p className="mt-1 text-sm font-medium text-ink">
-                  {item.used} / {isFinite(item.max) ? item.max : "∞"}
-                </p>
-                {isFinite(item.max) && (
-                  <div className="mt-1.5 h-1.5 rounded-full bg-surface-3">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percent}%` }}
-                      transition={{ delay: 0.5, duration: 0.8 }}
-                      className={`h-1.5 rounded-full ${isWarning ? "bg-warning" : "bg-primary"}`}
-                    />
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-card-title text-ink">
+            Utilisation
+          </h2>
+          <span className="text-xs text-ink-tertiary">
+            Se réinitialise chaque mois
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-3">
+          <UsageBar
+            label="Crédits scraping"
+            used={creditsUsed}
+            max={creditsMax}
+            showUpgrade
+          />
+          <UsageBar
+            label="Prospects"
+            used={stats.usage.usage.prospects}
+            max={stats.usage.limits.prospects}
+            showUpgrade
+          />
+          <UsageBar
+            label="Campagnes"
+            used={stats.usage.usage.campaigns}
+            max={stats.usage.limits.campaigns}
+            showUpgrade
+          />
+          <UsageBar
+            label="Messages / mois"
+            used={stats.usage.usage.messagesThisMonth}
+            max={stats.usage.limits.messagesPerMonth}
+            showUpgrade
+          />
+          <UsageBar
+            label="Membres"
+            used={stats.usage.usage.members}
+            max={stats.usage.limits.members}
+            showUpgrade
+          />
+          <UsageBar
+            label="Tags"
+            used={0}
+            max={stats.usage.limits.prospects > 25 ? 100 : 2}
+          />
         </div>
       </motion.div>
+
+      {/* Nudge for free/starter */}
+      {(plan === "free" || plan === "starter") && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mt-6 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-transparent p-5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-primary/20 p-3">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-ink">
+                {plan === "free"
+                  ? "Tu es limité à 25 prospects et 50 crédits"
+                  : "Tes crédits s'épuisent vite ?"}
+              </h3>
+              <p className="mt-0.5 text-xs text-ink-subtle">
+                {plan === "free"
+                  ? "Passe au Starter pour débloquer les campagnes WhatsApp et 200 crédits de scraping."
+                  : "Le plan Pro te donne 3 000 crédits, 10 campagnes et les actions groupées."}
+              </p>
+            </div>
+            <Link
+              href="/settings/billing"
+              className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary-hover hover:scale-[1.02]"
+            >
+              {plan === "free" ? "Passer au Starter — 5 000 F" : "Passer au Pro — 15 000 F"}
+            </Link>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
