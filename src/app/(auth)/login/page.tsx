@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, authClient, useListOrganizations } from "@/lib/auth-client";
+import { signIn, authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -17,40 +17,37 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      const result = await signIn.email({ email, password });
+    const result = await signIn.email(
+      { email, password },
+      {
+        onError: (ctx) => {
+          setError(
+            ctx.error.code === "INVALID_EMAIL_OR_PASSWORD"
+              ? "Email ou mot de passe incorrect"
+              : ctx.error.message ?? "Erreur de connexion"
+          );
+          setLoading(false);
+        },
+        onSuccess: async () => {
+          try {
+            const orgs = await authClient.organization.list();
 
-      if (result.error) {
-        setError(
-          result.error.code === "INVALID_EMAIL_OR_PASSWORD"
-            ? "Email ou mot de passe incorrect"
-            : result.error.message ?? "Erreur de connexion"
-        );
-        setLoading(false);
-        return;
+            if (!orgs.data || orgs.data.length === 0) {
+              router.push("/create-org");
+              return;
+            }
+
+            await authClient.organization.setActive({
+              organizationId: orgs.data[0].id,
+            });
+
+            router.push("/dashboard");
+          } catch {
+            router.push("/create-org");
+          }
+        },
       }
-
-      const orgs = await authClient.organization.list();
-
-      if (!orgs.data || orgs.data.length === 0) {
-        router.push("/create-org");
-        return;
-      }
-
-      const setOrgResult = await authClient.organization.setActive({
-        organizationId: orgs.data[0].id,
-      });
-
-      if (setOrgResult.error) {
-        router.push("/create-org");
-        return;
-      }
-
-      router.push("/dashboard");
-    } catch {
-      setError("Erreur de connexion. Vérifiez votre réseau.");
-      setLoading(false);
-    }
+    );
   }
 
   return (
