@@ -4,10 +4,11 @@
 
 ## Stack
 - Next.js 16 + TypeScript (--webpack pour compatibilité better-auth)
-- Prisma 7 + Prisma Postgres (via Prisma Console)
+- Prisma 7 + Supabase PostgreSQL (@prisma/adapter-pg)
 - Better Auth (email/password + magic link + organization plugin)
+- Supabase pour la BDD + RLS en protection de profondeur
 - Tailwind CSS 4 + shadcn/ui (New York)
-- Moneroo pour les paiements
+- Moneroo pour les paiements (SDK officiel)
 - WhatsApp via liens wa.me/ (pas de Baileys)
 - Vercel pour le déploiement
 
@@ -16,6 +17,12 @@
 - Toutes les données CRM scopées par `organizationId`
 - Subscription liée à l'org (remplace l'ancien système de license JWT)
 - Plans : free → freelance → pro → enterprise
+
+## Prisma + Supabase
+- Prisma utilise le rôle `postgres` (service_role) → bypass RLS
+- RLS activées sur toutes les tables → DENY ALL pour anon/authenticated
+- Toutes les opérations passent par les Server Actions (Prisma)
+- Aucun accès client direct aux tables via l'API REST Supabase
 
 ## Conventions
 - Commits en français
