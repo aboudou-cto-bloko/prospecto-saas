@@ -1,10 +1,22 @@
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
+import { getSession } from "@/lib/org-context";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getSession();
+
+  if (!session?.session || !session?.user) {
+    redirect("/login");
+  }
+
+  if (!session.session.activeOrganizationId) {
+    redirect("/create-org");
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar />

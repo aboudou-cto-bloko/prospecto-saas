@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useState, useEffect } from "react";
+import { authClient, useListOrganizations } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 export default function CreateOrgPage() {
   const router = useRouter();
+  const { data: orgs, isPending: orgsLoading } = useListOrganizations();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (orgsLoading || !orgs) return;
+    if (orgs.length > 0) {
+      authClient.organization
+        .setActive({ organizationId: orgs[0].id })
+        .then(() => router.push("/dashboard"))
+        .catch(() => {});
+    }
+  }, [orgs, orgsLoading, router]);
 
   function handleNameChange(value: string) {
     setName(value);
@@ -26,22 +37,36 @@ export default function CreateOrgPage() {
     setLoading(true);
     setError("");
 
-    const result = await authClient.organization.create({
-      name,
-      slug,
-    });
+    try {
+      const result = await authClient.organization.create({ name, slug });
 
-    if (result.error) {
-      setError(result.error.message ?? "Erreur lors de la création");
+      if (result.error) {
+        setError(result.error.message ?? "Erreur lors de la création");
+        setLoading(false);
+        return;
+      }
+
+      await authClient.organization.setActive({
+        organizationId: result.data.id,
+      });
+
+      router.push("/dashboard");
+    } catch {
+      setError("Erreur de connexion. Réessayez.");
       setLoading(false);
-      return;
     }
+  }
 
-    await authClient.organization.setActive({
-      organizationId: result.data.id,
-    });
-
-    router.push("/dashboard");
+  if (orgsLoading) {
+    return (
+      <div className="rounded-lg border border-hairline bg-surface-1 p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 w-48 rounded bg-surface-2" />
+          <div className="h-4 w-64 rounded bg-surface-2" />
+          <div className="h-10 rounded bg-surface-2" />
+        </div>
+      </div>
+    );
   }
 
   return (

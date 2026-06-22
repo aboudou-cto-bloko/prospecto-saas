@@ -18,12 +18,23 @@ export default function RegisterPage() {
     setLoading(true);
     setError("");
 
-    const result = await signUp.email({ name, email, password });
-    if (result.error) {
-      setError(result.error.message ?? "Erreur lors de l'inscription");
-      setLoading(false);
-    } else {
+    try {
+      const result = await signUp.email({ name, email, password });
+
+      if (result.error) {
+        const msg =
+          result.error.code === "USER_ALREADY_EXISTS"
+            ? "Un compte existe déjà avec cet email"
+            : result.error.message ?? "Erreur lors de l'inscription";
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+
       router.push("/create-org");
+    } catch {
+      setError("Erreur de connexion. Vérifiez votre réseau.");
+      setLoading(false);
     }
   }
 
