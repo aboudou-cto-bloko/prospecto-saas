@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useActiveOrganization } from "@/lib/auth-client";
 import { PLANS, CREDIT_PACKS, EXTRA_MEMBER_PRICE, type PlanId } from "@/lib/plans";
-import { Check, Zap, Star, MessageSquare } from "lucide-react";
+import { Check, Zap, Star, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,27 @@ export default function BillingPage() {
   const { data: org } = useActiveOrganization();
   const [isPending, startTransition] = useTransition();
   const [currentPlan] = useState<PlanId>("starter");
+
+  function handleBuyCredits(credits: number) {
+    if (!org?.id) return;
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/billing/credits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credits }),
+        });
+        const data = (await res.json()) as { url?: string; error?: string };
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          toast.error(data.error ?? "Erreur lors du paiement");
+        }
+      } catch {
+        toast.error("Erreur de connexion");
+      }
+    });
+  }
 
   function handleUpgrade(planId: PlanId) {
     if (!org?.id || planId === "enterprise") return;
@@ -162,9 +183,11 @@ export default function BillingPage() {
                 </p>
               </div>
               <button
+                onClick={() => handleBuyCredits(pack.credits)}
                 disabled={isPending}
-                className="rounded-md border border-hairline px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-md bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
               >
+                {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
                 {pack.price.toLocaleString("fr-FR")} F
               </button>
             </div>

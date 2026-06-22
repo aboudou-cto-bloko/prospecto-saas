@@ -30,8 +30,17 @@ export async function POST(req: NextRequest) {
 
   const data = event.data as Record<string, unknown>;
   const metadata = data.metadata as
-    | { organizationId?: string; plan?: string }
+    | { organizationId?: string; plan?: string; type?: string; credits?: string }
     | undefined;
+
+  if (event.event === "payment.success" && metadata?.organizationId && metadata?.type === "credits" && metadata?.credits) {
+    const { addExtraCredits } = await import("@/lib/subscription");
+    const credits = parseInt(metadata.credits);
+    if (credits > 0) {
+      await addExtraCredits(metadata.organizationId, credits);
+    }
+    return NextResponse.json({ received: true, event: event.event, type: "credits" });
+  }
 
   if (
     event.event === "payment.success" &&
