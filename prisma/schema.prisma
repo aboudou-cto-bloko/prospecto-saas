@@ -124,9 +124,11 @@ model Subscription {
   id                   String       @id @default(cuid())
   organizationId       String       @unique
   organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  plan                 String       @default("free")
+  plan                 String       @default("starter")
   status               String       @default("trialing")
   monerooTransactionId String?
+  scrapingCreditsUsed  Int          @default(0)
+  extraCredits         Int          @default(0)
   currentPeriodStart   DateTime     @default(now())
   currentPeriodEnd     DateTime
   canceledAt           DateTime?

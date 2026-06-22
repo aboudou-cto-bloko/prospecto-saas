@@ -11,16 +11,16 @@ export async function getSubscription(organizationId: string) {
   });
 }
 
-export async function createSubscription(organizationId: string, plan: PlanId = "free") {
+export async function createSubscription(organizationId: string, plan: PlanId = "starter") {
   const now = new Date();
   const periodEnd = new Date(now);
-  periodEnd.setDate(periodEnd.getDate() + (plan === "free" ? 365 * 10 : 31));
+  periodEnd.setDate(periodEnd.getDate() + 14);
 
   return prisma.subscription.create({
     data: {
       organizationId,
       plan,
-      status: plan === "free" ? "active" : "trialing",
+      status: "trialing",
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
     },
@@ -42,6 +42,7 @@ export async function activateSubscription(
       plan,
       status: "active",
       monerooTransactionId,
+      scrapingCreditsUsed: 0,
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
       canceledAt: null,
@@ -54,6 +55,13 @@ export async function activateSubscription(
       currentPeriodStart: now,
       currentPeriodEnd: periodEnd,
     },
+  });
+}
+
+export async function addExtraCredits(organizationId: string, credits: number) {
+  return prisma.subscription.update({
+    where: { organizationId },
+    data: { extraCredits: { increment: credits } },
   });
 }
 
@@ -77,6 +85,6 @@ export async function isSubscriptionActive(organizationId: string): Promise<bool
 
 export async function getOrgPlanLimits(organizationId: string) {
   const sub = await getSubscription(organizationId);
-  const planId = (sub?.plan ?? "free") as PlanId;
+  const planId = (sub?.plan ?? "starter") as PlanId;
   return { planId, limits: getPlanLimits(planId) };
 }

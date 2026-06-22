@@ -2,18 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { useActiveOrganization } from "@/lib/auth-client";
-import { PLANS, type PlanId } from "@/lib/plans";
-import { Check, Zap } from "lucide-react";
+import { PLANS, CREDIT_PACKS, EXTRA_MEMBER_PRICE, type PlanId } from "@/lib/plans";
+import { Check, Zap, Star, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function BillingPage() {
   const { data: org } = useActiveOrganization();
   const [isPending, startTransition] = useTransition();
-  const [currentPlan] = useState<PlanId>("free");
+  const [currentPlan] = useState<PlanId>("starter");
 
   function handleUpgrade(planId: PlanId) {
-    if (!org?.id) return;
+    if (!org?.id || planId === "enterprise") return;
     startTransition(async () => {
       try {
         const res = await fetch("/api/billing/checkout", {
@@ -39,10 +39,10 @@ export default function BillingPage() {
         Abonnement
       </h1>
       <p className="mt-1 text-sm text-ink-subtle">
-        Gère ton plan et tes limites
+        Gère ton plan, tes crédits et tes limites
       </p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-4">
+      <div className="mt-8 grid gap-5 lg:grid-cols-4">
         {(Object.entries(PLANS) as [PlanId, (typeof PLANS)[PlanId]][]).map(
           ([id, plan]) => {
             const isCurrent = id === currentPlan;
@@ -54,49 +54,70 @@ export default function BillingPage() {
               <div
                 key={id}
                 className={cn(
-                  "flex flex-col rounded-lg border p-6",
-                  isCurrent
+                  "relative flex flex-col rounded-lg border p-6",
+                  plan.popular
                     ? "border-primary bg-surface-2"
-                    : "border-hairline bg-surface-1"
+                    : isCurrent
+                      ? "border-primary/50 bg-surface-1"
+                      : "border-hairline bg-surface-1"
                 )}
               >
+                {plan.popular && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-primary px-3 py-0.5 text-[10px] font-semibold text-white">
+                    <Star className="h-3 w-3" /> POPULAIRE
+                  </span>
+                )}
+
                 <h3 className="text-lg font-semibold tracking-card-title text-ink">
                   {plan.name}
                 </h3>
-                <p className="mt-1 text-sm text-ink-subtle">
+                <p className="mt-1 text-xs text-ink-subtle">
                   {plan.description}
                 </p>
-                <p className="mt-4 text-3xl font-semibold tracking-headline text-ink">
-                  {plan.price === 0 ? "Gratuit" : `${plan.price.toLocaleString("fr-FR")} XOF`}
+                <p className="mt-4 text-2xl font-semibold tracking-headline text-ink">
+                  {plan.price === 0
+                    ? "Sur devis"
+                    : `${plan.price.toLocaleString("fr-FR")} F`}
                   {plan.price > 0 && (
-                    <span className="text-base font-normal text-ink-subtle">
+                    <span className="text-sm font-normal text-ink-subtle">
                       /mois
                     </span>
                   )}
                 </p>
 
-                <ul className="mt-6 flex-1 space-y-2">
+                <ul className="mt-5 flex-1 space-y-2">
                   {[
-                    `${isFinite(plan.limits.prospects) ? plan.limits.prospects : "∞"} prospects`,
-                    `${isFinite(plan.limits.campaigns) ? plan.limits.campaigns : "∞"} campagnes`,
-                    `${isFinite(plan.limits.messagesPerMonth) ? plan.limits.messagesPerMonth : "∞"} messages/mois`,
-                    `${plan.limits.members} membre${plan.limits.members > 1 ? "s" : ""}`,
+                    `${isFinite(plan.limits.scrapingCredits) ? plan.limits.scrapingCredits.toLocaleString("fr-FR") : "Illimité"} crédits scraping`,
+                    `${isFinite(plan.limits.prospects) ? plan.limits.prospects.toLocaleString("fr-FR") : "Illimité"} prospects`,
+                    `${isFinite(plan.limits.campaigns) ? plan.limits.campaigns : "Illimité"} campagnes`,
+                    `${isFinite(plan.limits.messagesPerMonth) ? plan.limits.messagesPerMonth.toLocaleString("fr-FR") : "Illimité"} messages/mois`,
+                    `${isFinite(plan.limits.members) ? plan.limits.members : "Illimité"} membre${plan.limits.members > 1 ? "s" : ""}`,
                   ].map((feature) => (
                     <li
                       key={feature}
-                      className="flex items-center gap-2 text-sm text-ink-muted"
+                      className="flex items-center gap-2 text-xs text-ink-muted"
                     >
-                      <Check className="h-4 w-4 text-success" />
+                      <Check className="h-3.5 w-3.5 text-success" />
                       {feature}
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-6">
+                <div className="mt-5">
                   {isCurrent ? (
                     <div className="rounded-md bg-surface-3 px-4 py-2 text-center text-sm text-ink-subtle">
                       Plan actuel
                     </div>
+                  ) : id === "enterprise" ? (
+                    <a
+                      href={`https://wa.me/2290167266360?text=${encodeURIComponent("Bonjour, je souhaite en savoir plus sur le plan Enterprise de Prospecto.")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Nous contacter
+                    </a>
                   ) : isUpgrade ? (
                     <button
                       onClick={() => handleUpgrade(id)}
@@ -112,6 +133,43 @@ export default function BillingPage() {
             );
           }
         )}
+      </div>
+
+      <div className="mt-10 rounded-lg border border-hairline bg-surface-1 p-6">
+        <h2 className="text-lg font-semibold tracking-card-title text-ink">
+          Packs de crédits supplémentaires
+        </h2>
+        <p className="mt-1 text-sm text-ink-subtle">
+          Besoin de plus de scraping ? Achetez des crédits en supplément.
+          {EXTRA_MEMBER_PRICE > 0 && (
+            <span>
+              {" "}Membre supplémentaire : {EXTRA_MEMBER_PRICE.toLocaleString("fr-FR")} F/mois.
+            </span>
+          )}
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {CREDIT_PACKS.map((pack) => (
+            <div
+              key={pack.credits}
+              className="flex items-center justify-between rounded-md border border-hairline bg-canvas p-4"
+            >
+              <div>
+                <p className="text-sm font-medium text-ink">
+                  {pack.credits.toLocaleString("fr-FR")} crédits
+                </p>
+                <p className="text-xs text-ink-subtle">
+                  {(pack.price / pack.credits).toFixed(1)} F/crédit
+                </p>
+              </div>
+              <button
+                disabled={isPending}
+                className="rounded-md border border-hairline px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-2 disabled:opacity-50"
+              >
+                {pack.price.toLocaleString("fr-FR")} F
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

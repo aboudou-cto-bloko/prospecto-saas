@@ -184,6 +184,8 @@ export const SubscriptionScalarFieldEnum = {
   plan: 'plan',
   status: 'status',
   monerooTransactionId: 'monerooTransactionId',
+  scrapingCreditsUsed: 'scrapingCreditsUsed',
+  extraCredits: 'extraCredits',
   currentPeriodStart: 'currentPeriodStart',
   currentPeriodEnd: 'currentPeriodEnd',
   canceledAt: 'canceledAt',

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { constructWebhookEvent } from "moneroo";
 import { activateSubscription } from "@/lib/subscription";
 import { prisma } from "@/lib/prisma";
-import { PLANS, type PlanId } from "@/lib/plans";
+import type { PlanId } from "@/lib/plans";
+import { PLANS } from "@/lib/plans";
 import React from "react";
 
 export async function POST(req: NextRequest) {
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   ) {
     const sub = await activateSubscription(
       metadata.organizationId,
-      metadata.plan as "freelance" | "pro" | "enterprise",
+      metadata.plan as PlanId,
       String(data.id ?? "")
     );
 

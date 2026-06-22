@@ -60,13 +60,13 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-ink-subtle">
           Plan actuel : <span className="capitalize text-ink">{stats.usage.plan}</span>
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5 xl:grid-cols-5">
           {[
+            { label: "Crédits scraping", used: stats.usage.usage.scrapingCreditsUsed, max: stats.usage.usage.scrapingCreditsTotal || stats.usage.limits.scrapingCredits },
             { label: "Prospects", used: stats.usage.usage.prospects, max: stats.usage.limits.prospects },
             { label: "Campagnes", used: stats.usage.usage.campaigns, max: stats.usage.limits.campaigns },
             { label: "Messages/mois", used: stats.usage.usage.messagesThisMonth, max: stats.usage.limits.messagesPerMonth },
-            { label: "Champs perso", used: stats.usage.usage.customFields, max: stats.usage.limits.customFields },
-            { label: "Tags", used: stats.usage.usage.tags, max: stats.usage.limits.tags },
+            { label: "Membres", used: stats.usage.usage.members, max: stats.usage.limits.members },
           ].map((item) => (
             <div key={item.label}>
               <p className="text-xs text-ink-subtle">{item.label}</p>

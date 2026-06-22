@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getOrgPlanLimits } from "@/lib/subscription";
+import { getOrgPlanLimits, getSubscription } from "@/lib/subscription";
 
 export class LimitError extends Error {
   constructor(message: string) {
@@ -52,6 +52,26 @@ export async function assertMonthlyMessageLimit(organizationId: string) {
   }
 }
 
+export async function assertScrapingCredits(organizationId: string, consuming = 1) {
+  const { limits } = await getOrgPlanLimits(organizationId);
+  if (!isFinite(limits.scrapingCredits)) return;
+  const sub = await getSubscription(organizationId);
+  if (!sub) throw new LimitError("Aucun abonnement actif");
+  const totalCredits = limits.scrapingCredits + sub.extraCredits;
+  if (sub.scrapingCreditsUsed + consuming > totalCredits) {
+    throw new LimitError(
+      `Crédits de scraping épuisés (${sub.scrapingCreditsUsed}/${totalCredits}). Achetez un pack supplémentaire.`
+    );
+  }
+}
+
+export async function consumeScrapingCredits(organizationId: string, count: number) {
+  await prisma.subscription.update({
+    where: { organizationId },
+    data: { scrapingCreditsUsed: { increment: count } },
+  });
+}
+
 export async function assertCustomFieldLimit(organizationId: string) {
   const { limits } = await getOrgPlanLimits(organizationId);
   if (!isFinite(limits.customFields)) return;
@@ -76,11 +96,12 @@ export async function assertTagLimit(organizationId: string) {
 
 export async function getUsage(organizationId: string) {
   const { planId, limits } = await getOrgPlanLimits(organizationId);
+  const sub = await getSubscription(organizationId);
   const start = new Date();
   start.setDate(1);
   start.setHours(0, 0, 0, 0);
 
-  const [prospects, campaigns, messagesThisMonth, customFields, tags] =
+  const [prospects, campaigns, messagesThisMonth, customFields, tags, members] =
     await Promise.all([
       prisma.prospect.count({ where: { organizationId } }),
       prisma.campaign.count({ where: { organizationId } }),
@@ -93,11 +114,21 @@ export async function getUsage(organizationId: string) {
       }),
       prisma.customField.count({ where: { organizationId } }),
       prisma.tag.count({ where: { organizationId } }),
+      prisma.member.count({ where: { organizationId } }),
     ]);
 
   return {
     plan: planId,
     limits,
-    usage: { prospects, campaigns, messagesThisMonth, customFields, tags },
+    usage: {
+      prospects,
+      campaigns,
+      messagesThisMonth,
+      customFields,
+      tags,
+      members,
+      scrapingCreditsUsed: sub?.scrapingCreditsUsed ?? 0,
+      scrapingCreditsTotal: (isFinite(limits.scrapingCredits) ? limits.scrapingCredits : 0) + (sub?.extraCredits ?? 0),
+    },
   };
 }

@@ -20,8 +20,20 @@ export type SubscriptionModel = runtime.Types.Result.DefaultSelection<Prisma.$Su
 
 export type AggregateSubscription = {
   _count: SubscriptionCountAggregateOutputType | null
+  _avg: SubscriptionAvgAggregateOutputType | null
+  _sum: SubscriptionSumAggregateOutputType | null
   _min: SubscriptionMinAggregateOutputType | null
   _max: SubscriptionMaxAggregateOutputType | null
+}
+
+export type SubscriptionAvgAggregateOutputType = {
+  scrapingCreditsUsed: number | null
+  extraCredits: number | null
+}
+
+export type SubscriptionSumAggregateOutputType = {
+  scrapingCreditsUsed: number | null
+  extraCredits: number | null
 }
 
 export type SubscriptionMinAggregateOutputType = {
@@ -30,6 +42,8 @@ export type SubscriptionMinAggregateOutputType = {
   plan: string | null
   status: string | null
   monerooTransactionId: string | null
+  scrapingCreditsUsed: number | null
+  extraCredits: number | null
   currentPeriodStart: Date | null
   currentPeriodEnd: Date | null
   canceledAt: Date | null
@@ -43,6 +57,8 @@ export type SubscriptionMaxAggregateOutputType = {
   plan: string | null
   status: string | null
   monerooTransactionId: string | null
+  scrapingCreditsUsed: number | null
+  extraCredits: number | null
   currentPeriodStart: Date | null
   currentPeriodEnd: Date | null
   canceledAt: Date | null
@@ -56,6 +72,8 @@ export type SubscriptionCountAggregateOutputType = {
   plan: number
   status: number
   monerooTransactionId: number
+  scrapingCreditsUsed: number
+  extraCredits: number
   currentPeriodStart: number
   currentPeriodEnd: number
   canceledAt: number
@@ -65,12 +83,24 @@ export type SubscriptionCountAggregateOutputType = {
 }
 
 
+export type SubscriptionAvgAggregateInputType = {
+  scrapingCreditsUsed?: true
+  extraCredits?: true
+}
+
+export type SubscriptionSumAggregateInputType = {
+  scrapingCreditsUsed?: true
+  extraCredits?: true
+}
+
 export type SubscriptionMinAggregateInputType = {
   id?: true
   organizationId?: true
   plan?: true
   status?: true
   monerooTransactionId?: true
+  scrapingCreditsUsed?: true
+  extraCredits?: true
   currentPeriodStart?: true
   currentPeriodEnd?: true
   canceledAt?: true
@@ -84,6 +114,8 @@ export type SubscriptionMaxAggregateInputType = {
   plan?: true
   status?: true
   monerooTransactionId?: true
+  scrapingCreditsUsed?: true
+  extraCredits?: true
   currentPeriodStart?: true
   currentPeriodEnd?: true
   canceledAt?: true
@@ -97,6 +129,8 @@ export type SubscriptionCountAggregateInputType = {
   plan?: true
   status?: true
   monerooTransactionId?: true
+  scrapingCreditsUsed?: true
+  extraCredits?: true
   currentPeriodStart?: true
   currentPeriodEnd?: true
   canceledAt?: true
@@ -143,6 +177,18 @@ export type SubscriptionAggregateArgs<ExtArgs extends runtime.Types.Extensions.I
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: SubscriptionAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: SubscriptionSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: SubscriptionMinAggregateInputType
@@ -173,6 +219,8 @@ export type SubscriptionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   _count?: SubscriptionCountAggregateInputType | true
+  _avg?: SubscriptionAvgAggregateInputType
+  _sum?: SubscriptionSumAggregateInputType
   _min?: SubscriptionMinAggregateInputType
   _max?: SubscriptionMaxAggregateInputType
 }
@@ -183,12 +231,16 @@ export type SubscriptionGroupByOutputType = {
   plan: string
   status: string
   monerooTransactionId: string | null
+  scrapingCreditsUsed: number
+  extraCredits: number
   currentPeriodStart: Date
   currentPeriodEnd: Date
   canceledAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: SubscriptionCountAggregateOutputType | null
+  _avg: SubscriptionAvgAggregateOutputType | null
+  _sum: SubscriptionSumAggregateOutputType | null
   _min: SubscriptionMinAggregateOutputType | null
   _max: SubscriptionMaxAggregateOutputType | null
 }
@@ -217,6 +269,8 @@ export type SubscriptionWhereInput = {
   plan?: Prisma.StringFilter<"Subscription"> | string
   status?: Prisma.StringFilter<"Subscription"> | string
   monerooTransactionId?: Prisma.StringNullableFilter<"Subscription"> | string | null
+  scrapingCreditsUsed?: Prisma.IntFilter<"Subscription"> | number
+  extraCredits?: Prisma.IntFilter<"Subscription"> | number
   currentPeriodStart?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   currentPeriodEnd?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   canceledAt?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
@@ -231,6 +285,8 @@ export type SubscriptionOrderByWithRelationInput = {
   plan?: Prisma.SortOrder
   status?: Prisma.SortOrder
   monerooTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
   currentPeriodStart?: Prisma.SortOrder
   currentPeriodEnd?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -248,6 +304,8 @@ export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
   plan?: Prisma.StringFilter<"Subscription"> | string
   status?: Prisma.StringFilter<"Subscription"> | string
   monerooTransactionId?: Prisma.StringNullableFilter<"Subscription"> | string | null
+  scrapingCreditsUsed?: Prisma.IntFilter<"Subscription"> | number
+  extraCredits?: Prisma.IntFilter<"Subscription"> | number
   currentPeriodStart?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   currentPeriodEnd?: Prisma.DateTimeFilter<"Subscription"> | Date | string
   canceledAt?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
@@ -262,14 +320,18 @@ export type SubscriptionOrderByWithAggregationInput = {
   plan?: Prisma.SortOrder
   status?: Prisma.SortOrder
   monerooTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
   currentPeriodStart?: Prisma.SortOrder
   currentPeriodEnd?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SubscriptionCountOrderByAggregateInput
+  _avg?: Prisma.SubscriptionAvgOrderByAggregateInput
   _max?: Prisma.SubscriptionMaxOrderByAggregateInput
   _min?: Prisma.SubscriptionMinOrderByAggregateInput
+  _sum?: Prisma.SubscriptionSumOrderByAggregateInput
 }
 
 export type SubscriptionScalarWhereWithAggregatesInput = {
@@ -281,6 +343,8 @@ export type SubscriptionScalarWhereWithAggregatesInput = {
   plan?: Prisma.StringWithAggregatesFilter<"Subscription"> | string
   status?: Prisma.StringWithAggregatesFilter<"Subscription"> | string
   monerooTransactionId?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
+  scrapingCreditsUsed?: Prisma.IntWithAggregatesFilter<"Subscription"> | number
+  extraCredits?: Prisma.IntWithAggregatesFilter<"Subscription"> | number
   currentPeriodStart?: Prisma.DateTimeWithAggregatesFilter<"Subscription"> | Date | string
   currentPeriodEnd?: Prisma.DateTimeWithAggregatesFilter<"Subscription"> | Date | string
   canceledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Subscription"> | Date | string | null
@@ -293,6 +357,8 @@ export type SubscriptionCreateInput = {
   plan?: string
   status?: string
   monerooTransactionId?: string | null
+  scrapingCreditsUsed?: number
+  extraCredits?: number
   currentPeriodStart?: Date | string
   currentPeriodEnd: Date | string
   canceledAt?: Date | string | null
@@ -307,6 +373,8 @@ export type SubscriptionUncheckedCreateInput = {
   plan?: string
   status?: string
   monerooTransactionId?: string | null
+  scrapingCreditsUsed?: number
+  extraCredits?: number
   currentPeriodStart?: Date | string
   currentPeriodEnd: Date | string
   canceledAt?: Date | string | null
@@ -319,6 +387,8 @@ export type SubscriptionUpdateInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -333,6 +403,8 @@ export type SubscriptionUncheckedUpdateInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -346,6 +418,8 @@ export type SubscriptionCreateManyInput = {
   plan?: string
   status?: string
   monerooTransactionId?: string | null
+  scrapingCreditsUsed?: number
+  extraCredits?: number
   currentPeriodStart?: Date | string
   currentPeriodEnd: Date | string
   canceledAt?: Date | string | null
@@ -358,6 +432,8 @@ export type SubscriptionUpdateManyMutationInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -371,6 +447,8 @@ export type SubscriptionUncheckedUpdateManyInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -389,11 +467,18 @@ export type SubscriptionCountOrderByAggregateInput = {
   plan?: Prisma.SortOrder
   status?: Prisma.SortOrder
   monerooTransactionId?: Prisma.SortOrder
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
   currentPeriodStart?: Prisma.SortOrder
   currentPeriodEnd?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type SubscriptionAvgOrderByAggregateInput = {
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
 }
 
 export type SubscriptionMaxOrderByAggregateInput = {
@@ -402,6 +487,8 @@ export type SubscriptionMaxOrderByAggregateInput = {
   plan?: Prisma.SortOrder
   status?: Prisma.SortOrder
   monerooTransactionId?: Prisma.SortOrder
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
   currentPeriodStart?: Prisma.SortOrder
   currentPeriodEnd?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
@@ -415,11 +502,18 @@ export type SubscriptionMinOrderByAggregateInput = {
   plan?: Prisma.SortOrder
   status?: Prisma.SortOrder
   monerooTransactionId?: Prisma.SortOrder
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
   currentPeriodStart?: Prisma.SortOrder
   currentPeriodEnd?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type SubscriptionSumOrderByAggregateInput = {
+  scrapingCreditsUsed?: Prisma.SortOrder
+  extraCredits?: Prisma.SortOrder
 }
 
 export type SubscriptionCreateNestedOneWithoutOrganizationInput = {
@@ -454,11 +548,21 @@ export type SubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubscriptionUpdateToOneWithWhereWithoutOrganizationInput, Prisma.SubscriptionUpdateWithoutOrganizationInput>, Prisma.SubscriptionUncheckedUpdateWithoutOrganizationInput>
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type SubscriptionCreateWithoutOrganizationInput = {
   id?: string
   plan?: string
   status?: string
   monerooTransactionId?: string | null
+  scrapingCreditsUsed?: number
+  extraCredits?: number
   currentPeriodStart?: Date | string
   currentPeriodEnd: Date | string
   canceledAt?: Date | string | null
@@ -471,6 +575,8 @@ export type SubscriptionUncheckedCreateWithoutOrganizationInput = {
   plan?: string
   status?: string
   monerooTransactionId?: string | null
+  scrapingCreditsUsed?: number
+  extraCredits?: number
   currentPeriodStart?: Date | string
   currentPeriodEnd: Date | string
   canceledAt?: Date | string | null
@@ -499,6 +605,8 @@ export type SubscriptionUpdateWithoutOrganizationInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -511,6 +619,8 @@ export type SubscriptionUncheckedUpdateWithoutOrganizationInput = {
   plan?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   monerooTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scrapingCreditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
+  extraCredits?: Prisma.IntFieldUpdateOperationsInput | number
   currentPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   currentPeriodEnd?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -526,6 +636,8 @@ export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   plan?: boolean
   status?: boolean
   monerooTransactionId?: boolean
+  scrapingCreditsUsed?: boolean
+  extraCredits?: boolean
   currentPeriodStart?: boolean
   currentPeriodEnd?: boolean
   canceledAt?: boolean
@@ -540,6 +652,8 @@ export type SubscriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   plan?: boolean
   status?: boolean
   monerooTransactionId?: boolean
+  scrapingCreditsUsed?: boolean
+  extraCredits?: boolean
   currentPeriodStart?: boolean
   currentPeriodEnd?: boolean
   canceledAt?: boolean
@@ -554,6 +668,8 @@ export type SubscriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   plan?: boolean
   status?: boolean
   monerooTransactionId?: boolean
+  scrapingCreditsUsed?: boolean
+  extraCredits?: boolean
   currentPeriodStart?: boolean
   currentPeriodEnd?: boolean
   canceledAt?: boolean
@@ -568,6 +684,8 @@ export type SubscriptionSelectScalar = {
   plan?: boolean
   status?: boolean
   monerooTransactionId?: boolean
+  scrapingCreditsUsed?: boolean
+  extraCredits?: boolean
   currentPeriodStart?: boolean
   currentPeriodEnd?: boolean
   canceledAt?: boolean
@@ -575,7 +693,7 @@ export type SubscriptionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "plan" | "status" | "monerooTransactionId" | "currentPeriodStart" | "currentPeriodEnd" | "canceledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["subscription"]>
+export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "organizationId" | "plan" | "status" | "monerooTransactionId" | "scrapingCreditsUsed" | "extraCredits" | "currentPeriodStart" | "currentPeriodEnd" | "canceledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["subscription"]>
 export type SubscriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organization?: boolean | Prisma.OrganizationDefaultArgs<ExtArgs>
 }
@@ -597,6 +715,8 @@ export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     plan: string
     status: string
     monerooTransactionId: string | null
+    scrapingCreditsUsed: number
+    extraCredits: number
     currentPeriodStart: Date
     currentPeriodEnd: Date
     canceledAt: Date | null
@@ -1031,6 +1151,8 @@ export interface SubscriptionFieldRefs {
   readonly plan: Prisma.FieldRef<"Subscription", 'String'>
   readonly status: Prisma.FieldRef<"Subscription", 'String'>
   readonly monerooTransactionId: Prisma.FieldRef<"Subscription", 'String'>
+  readonly scrapingCreditsUsed: Prisma.FieldRef<"Subscription", 'Int'>
+  readonly extraCredits: Prisma.FieldRef<"Subscription", 'Int'>
   readonly currentPeriodStart: Prisma.FieldRef<"Subscription", 'DateTime'>
   readonly currentPeriodEnd: Prisma.FieldRef<"Subscription", 'DateTime'>
   readonly canceledAt: Prisma.FieldRef<"Subscription", 'DateTime'>

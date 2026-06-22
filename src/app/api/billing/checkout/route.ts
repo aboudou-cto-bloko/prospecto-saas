@@ -5,7 +5,7 @@ import { Moneroo } from "moneroo";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
-  plan: z.enum(["freelance", "pro", "enterprise"]),
+  plan: z.enum(["starter", "pro", "business"]),
 });
 
 export async function POST(req: NextRequest) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireOrg } from "@/lib/org-context";
-import { assertProspectLimit } from "@/lib/limits";
+import { assertProspectLimit, assertScrapingCredits, consumeScrapingCredits } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import * as cheerio from "cheerio";
 import { z } from "zod";
@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ added: 0, message: "Aucun prospect trouvé" });
     }
 
+    await assertScrapingCredits(organizationId, allProspects.length);
     await assertProspectLimit(organizationId, allProspects.length);
 
     let added = 0;
@@ -104,6 +105,8 @@ export async function POST(req: NextRequest) {
         // duplicate phone — skip
       }
     }
+
+    await consumeScrapingCredits(organizationId, allProspects.length);
 
     return NextResponse.json({
       added,

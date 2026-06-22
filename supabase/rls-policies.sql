@@ -1,50 +1,41 @@
 -- ============================================================================
 -- Prospecto SaaS — RLS Policies
 -- ============================================================================
--- Prisma utilise le rôle `postgres` (service_role) qui bypass les RLS.
--- Ces policies protègent contre les accès directs via l'API REST Supabase
--- (PostgREST) ou le client Supabase côté navigateur.
+-- À exécuter après chaque `prisma migrate dev` (Prisma ne gère pas les RLS).
 --
--- Stratégie : DENY ALL par défaut, seul le service_role (Prisma) peut écrire.
--- Les tables Better Auth sont protégées — aucun accès client direct.
+-- Stratégie :
+--   1. ENABLE + FORCE ROW LEVEL SECURITY sur toutes les tables
+--   2. DENY ALL pour anon/authenticated (aucune policy = deny)
+--   3. Policy explicite pour le rôle postgres (Prisma via pooler)
 -- ============================================================================
 
--- ── Better Auth tables — DENY ALL ──────────────────────────────────────────
--- Ces tables ne doivent JAMAIS être accessibles via l'API REST.
--- Better Auth les gère exclusivement via Prisma (service_role).
+-- ── ENABLE + FORCE ──────────────────────────────────────────────────────────
 
-ALTER TABLE "user" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "session" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "account" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "verification" ENABLE ROW LEVEL SECURITY;
+DO $$
+DECLARE t text;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+           AND tablename NOT LIKE '_prisma%'
+  LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+  END LOOP;
+END $$;
 
--- Aucune policy = deny all pour anon et authenticated
+-- ── Policy pour Prisma (rôle postgres) ──────────────────────────────────────
 
--- ── Organization tables — DENY ALL ─────────────────────────────────────────
-
-ALTER TABLE "organization" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "member" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "invitation" ENABLE ROW LEVEL SECURITY;
-
--- ── Subscription — DENY ALL ────────────────────────────────────────────────
-
-ALTER TABLE "subscription" ENABLE ROW LEVEL SECURITY;
-
--- ── CRM tables — DENY ALL ──────────────────────────────────────────────────
--- Toutes les opérations CRM passent par les Server Actions (Prisma).
--- Aucun accès client direct n'est nécessaire.
-
-ALTER TABLE "prospect" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "campaign" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "campaign_prospect" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "custom_field" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "tag" ENABLE ROW LEVEL SECURITY;
-
--- ============================================================================
--- Vérification : aucune policy créée = toutes les tables sont en DENY ALL
--- pour les rôles anon et authenticated.
--- Le rôle postgres (service_role) bypass les RLS automatiquement.
--- ============================================================================
-
--- Pour vérifier que les RLS sont bien actives :
--- SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+DO $$
+DECLARE t text;
+BEGIN
+  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+           AND tablename NOT LIKE '_prisma%'
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies WHERE tablename = t AND policyname = 'service_role_all'
+    ) THEN
+      EXECUTE format(
+        'CREATE POLICY service_role_all ON %I FOR ALL TO postgres USING (true) WITH CHECK (true)', t
+      );
+    END IF;
+  END LOOP;
+END $$;
