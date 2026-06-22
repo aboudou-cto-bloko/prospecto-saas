@@ -45,8 +45,18 @@ declare module "react-simple-maps" {
     onClick?: () => void;
   }
 
+  interface ZoomableGroupProps {
+    center?: [number, number];
+    zoom?: number;
+    minZoom?: number;
+    maxZoom?: number;
+    onMoveEnd?: (event: { coordinates: [number, number]; zoom: number }) => void;
+    children?: ReactNode;
+  }
+
   export const ComposableMap: ComponentType<ComposableMapProps>;
   export const Geographies: ComponentType<GeographiesProps>;
   export const Geography: ComponentType<GeographyProps>;
   export const Marker: ComponentType<MarkerProps>;
+  export const ZoomableGroup: ComponentType<ZoomableGroupProps>;
 }
