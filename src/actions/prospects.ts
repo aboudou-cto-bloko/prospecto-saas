@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireOrg } from "@/lib/org-context";
+import { requireOrg, requireRole } from "@/lib/org-context";
 import { assertProspectLimit } from "@/lib/limits";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -48,7 +48,7 @@ export async function updateProspectStatus(id: string, status: ProspectStatus) {
 }
 
 export async function deleteProspect(id: string) {
-  const { organizationId } = await requireOrg();
+  const { organizationId } = await requireRole("owner", "admin");
 
   await prisma.prospect.delete({
     where: { id, organizationId },

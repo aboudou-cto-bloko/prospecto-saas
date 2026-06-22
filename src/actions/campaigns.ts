@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireOrg } from "@/lib/org-context";
+import { requireOrg, requireRole } from "@/lib/org-context";
 import { assertCampaignLimit } from "@/lib/limits";
 import { generateWhatsAppLink, renderTemplate } from "@/lib/template";
 import { revalidatePath } from "next/cache";
@@ -33,7 +33,7 @@ export async function createCampaign(data: z.input<typeof createCampaignSchema>)
 }
 
 export async function updateCampaignStatus(id: string, status: CampaignStatus) {
-  const { organizationId } = await requireOrg();
+  const { organizationId } = await requireRole("owner", "admin");
 
   const campaign = await prisma.campaign.update({
     where: { id, organizationId },

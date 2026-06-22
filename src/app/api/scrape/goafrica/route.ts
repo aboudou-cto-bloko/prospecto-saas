@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireOrg } from "@/lib/org-context";
+import { requireRole } from "@/lib/org-context";
 import { assertProspectLimit, assertScrapingCredits, consumeScrapingCredits } from "@/lib/limits";
 import { prisma } from "@/lib/prisma";
 import * as cheerio from "cheerio";
@@ -69,7 +69,7 @@ async function scrapeGoAfricaPage(
 
 export async function POST(req: NextRequest) {
   try {
-    const { organizationId, user } = await requireOrg();
+    const { organizationId, user } = await requireRole("owner", "admin");
     const body = scrapeSchema.parse(await req.json());
 
     const allProspects: ScrapedProspect[] = [];

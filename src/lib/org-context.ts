@@ -2,6 +2,9 @@
 
 import { headers } from "next/headers";
 import { auth } from "./auth";
+import { prisma } from "./prisma";
+
+export type OrgRole = "owner" | "admin" | "member";
 
 export async function getSession() {
   const session = await auth.api.getSession({
@@ -24,5 +27,32 @@ export async function requireOrg() {
   if (!orgId) {
     throw new Error("Aucune organisation active");
   }
-  return { ...session, organizationId: orgId };
+
+  const member = await prisma.member.findUnique({
+    where: {
+      organizationId_userId: {
+        organizationId: orgId,
+        userId: session.user.id,
+      },
+    },
+  });
+  if (!member) {
+    throw new Error("Accès refusé à cette organisation");
+  }
+
+  return {
+    ...session,
+    organizationId: orgId,
+    role: member.role as OrgRole,
+  };
+}
+
+export async function requireRole(...allowed: OrgRole[]) {
+  const ctx = await requireOrg();
+  if (!allowed.includes(ctx.role)) {
+    throw new Error(
+      `Permission refusée. Rôle requis : ${allowed.join(" ou ")}. Votre rôle : ${ctx.role}`
+    );
+  }
+  return ctx;
 }

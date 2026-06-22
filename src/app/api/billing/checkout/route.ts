@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireOrg } from "@/lib/org-context";
+import { requireRole } from "@/lib/org-context";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { Moneroo } from "moneroo";
 import { z } from "zod";
@@ -10,7 +10,7 @@ const checkoutSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { organizationId, user } = await requireOrg();
+    const { organizationId, user } = await requireRole("owner");
     const body = checkoutSchema.parse(await req.json());
     const plan = PLANS[body.plan as PlanId];
 
