@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createProspect, updateProspectStatus, deleteProspect } from "@/actions/prospects";
+import {
+  createProspect,
+  updateProspectStatus,
+  deleteProspect,
+  bulkDeleteProspects,
+  bulkUpdateStatus,
+  updateProspectTags,
+} from "@/actions/prospects";
 import { generateWhatsAppLink } from "@/lib/template";
 import {
   Plus,
@@ -11,9 +18,16 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Users,
+  CheckSquare,
+  Square,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TagBadge } from "@/components/tag-badge";
+import { TagManager } from "@/components/tag-manager";
+import { EmptyState } from "@/components/empty-state";
 import type { Prospect, Tag } from "@/generated/prisma/client";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -32,12 +46,30 @@ type Props = {
   totalPages: number;
 };
 
-export function ProspectsList({ prospects, tags: _tags, total: _total, page, totalPages }: Props) {
+export function ProspectsList({ prospects, tags, total, page, totalPages }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [tagPopoverFor, setTagPopoverFor] = useState<string | null>(null);
+
+  const allSelected = prospects.length > 0 && selected.size === prospects.length;
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(prospects.map((p) => p.id)));
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +97,6 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
   async function handleAdd(formData: FormData) {
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
-
     startTransition(async () => {
       try {
         await createProspect({ name, phone });
@@ -82,6 +113,7 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
       try {
         await deleteProspect(id);
         toast.success("Prospect supprimé");
+        setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erreur");
       }
@@ -91,10 +123,54 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
   async function handleStatusChange(id: string, status: string) {
     startTransition(async () => {
       try {
-        await updateProspectStatus(
-          id,
-          status as "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "LOST"
-        );
+        await updateProspectStatus(id, status as "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "LOST");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erreur");
+      }
+    });
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selected);
+    startTransition(async () => {
+      try {
+        await bulkDeleteProspects(ids);
+        toast.success(`${ids.length} prospect(s) supprimé(s)`);
+        setSelected(new Set());
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erreur");
+      }
+    });
+  }
+
+  async function handleBulkStatus(status: string) {
+    const ids = Array.from(selected);
+    startTransition(async () => {
+      try {
+        await bulkUpdateStatus(ids, status as "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "LOST");
+        toast.success(`${ids.length} prospect(s) mis à jour`);
+        setSelected(new Set());
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erreur");
+      }
+    });
+  }
+
+  function getProspectTags(prospect: Prospect): string[] {
+    try {
+      const raw = prospect.tags;
+      if (Array.isArray(raw)) return raw as string[];
+      return [];
+    } catch { return []; }
+  }
+
+  async function handleToggleTag(prospectId: string, tagName: string, currentTags: string[]) {
+    const newTags = currentTags.includes(tagName)
+      ? currentTags.filter((t) => t !== tagName)
+      : [...currentTags, tagName];
+    startTransition(async () => {
+      try {
+        await updateProspectTags(prospectId, newTags);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Erreur");
       }
@@ -103,6 +179,7 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
 
   return (
     <div className="mt-6">
+      {/* Search + Filters + Actions */}
       <div className="flex items-center gap-3">
         <form onSubmit={handleSearch} className="flex-1">
           <div className="relative">
@@ -118,24 +195,23 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
         </form>
 
         <div className="flex gap-1">
-          {[null, "NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"].map(
-            (s) => (
-              <button
-                key={s ?? "all"}
-                onClick={() => handleStatusFilter(s)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-xs transition-colors",
-                  searchParams.get("status") === s ||
-                    (!s && !searchParams.get("status"))
-                    ? "bg-surface-2 text-ink"
-                    : "text-ink-subtle hover:bg-surface-2"
-                )}
-              >
-                {s ? STATUS_LABELS[s].label : "Tous"}
-              </button>
-            )
-          )}
+          {[null, "NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"].map((s) => (
+            <button
+              key={s ?? "all"}
+              onClick={() => handleStatusFilter(s)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs transition-colors",
+                searchParams.get("status") === s || (!s && !searchParams.get("status"))
+                  ? "bg-surface-2 text-ink"
+                  : "text-ink-subtle hover:bg-surface-2"
+              )}
+            >
+              {s ? STATUS_LABELS[s].label : "Tous"}
+            </button>
+          ))}
         </div>
+
+        <TagManager />
 
         <button
           onClick={() => setShowAddForm(!showAddForm)}
@@ -146,131 +222,196 @@ export function ProspectsList({ prospects, tags: _tags, total: _total, page, tot
         </button>
       </div>
 
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2.5">
+          <span className="text-sm font-medium text-ink">
+            {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
+          </span>
+          <div className="flex gap-2">
+            {Object.entries(STATUS_LABELS).map(([key, val]) => (
+              <button
+                key={key}
+                onClick={() => handleBulkStatus(key)}
+                disabled={isPending}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  val.color
+                )}
+              >
+                {val.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleBulkDelete}
+            disabled={isPending}
+            className="ml-auto flex items-center gap-1.5 rounded-md bg-destructive/20 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/30"
+          >
+            <Trash2 className="h-3 w-3" /> Supprimer
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-ink-subtle hover:text-ink"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Add form */}
       {showAddForm && (
         <form
           action={handleAdd}
           className="mt-4 flex gap-3 rounded-lg border border-hairline bg-surface-1 p-4"
         >
-          <input
-            name="name"
-            required
-            placeholder="Nom"
-            className="flex-1 rounded-md border border-hairline bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
-          />
-          <input
-            name="phone"
-            required
-            placeholder="+229 XX XX XX XX"
-            className="flex-1 rounded-md border border-hairline bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-          >
+          <input name="name" required placeholder="Nom" className="flex-1 rounded-md border border-hairline bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none" />
+          <input name="phone" required placeholder="+229 XX XX XX XX" className="flex-1 rounded-md border border-hairline bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none" />
+          <button type="submit" disabled={isPending} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50">
             Ajouter
           </button>
         </form>
       )}
 
-      <div className="mt-4 rounded-lg border border-hairline bg-surface-1">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-hairline text-left text-xs text-ink-subtle">
-              <th className="px-4 py-3 font-medium">Nom</th>
-              <th className="px-4 py-3 font-medium">Téléphone</th>
-              <th className="px-4 py-3 font-medium">Source</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-hairline">
-            {prospects.map((p) => (
-              <tr
-                key={p.id}
-                className="text-sm transition-colors hover:bg-surface-2/50"
+      {/* Table */}
+      {prospects.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            icon={Users}
+            title="Aucun prospect"
+            description="Ajoute des prospects manuellement, via CSV ou avec le scraper GoAfricaOnline."
+            action={
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
               >
-                <td className="px-4 py-3 text-ink">{p.name}</td>
-                <td className="px-4 py-3 font-mono text-xs text-ink-muted">
-                  {p.phone}
-                </td>
-                <td className="px-4 py-3 text-xs text-ink-subtle">
-                  {p.source.replace(/_/g, " ")}
-                </td>
-                <td className="px-4 py-3">
-                  <select
-                    value={p.status}
-                    onChange={(e) => handleStatusChange(p.id, e.target.value)}
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      STATUS_LABELS[p.status]?.color
-                    )}
-                    style={{ background: "transparent" }}
-                  >
-                    {Object.entries(STATUS_LABELS).map(([key, val]) => (
-                      <option key={key} value={key}>
-                        {val.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={generateWhatsAppLink(
-                        p.phone,
-                        `Bonjour ${p.name} !`
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-md p-1.5 text-ink-subtle transition-colors hover:bg-success/20 hover:text-success"
-                      title="Envoyer WhatsApp"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="rounded-md p-1.5 text-ink-subtle transition-colors hover:bg-destructive/20 hover:text-destructive"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+                <Plus className="h-4 w-4" /> Ajouter un prospect
+              </button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-hairline bg-surface-1">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-hairline text-left text-xs text-ink-subtle">
+                <th className="w-10 px-4 py-3">
+                  <button onClick={toggleAll} className="text-ink-tertiary hover:text-ink">
+                    {allSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-medium">Nom</th>
+                <th className="px-4 py-3 font-medium">Téléphone</th>
+                <th className="px-4 py-3 font-medium">Tags</th>
+                <th className="px-4 py-3 font-medium">Statut</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
-            ))}
-            {prospects.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-12 text-center text-sm text-ink-subtle"
-                >
-                  Aucun prospect trouvé
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-hairline">
+              {prospects.map((p) => {
+                const pTags = getProspectTags(p);
+                return (
+                  <tr key={p.id} className={cn("text-sm transition-colors hover:bg-surface-2/50", selected.has(p.id) && "bg-primary/5")}>
+                    <td className="px-4 py-3">
+                      <button onClick={() => toggleSelect(p.id)} className="text-ink-tertiary hover:text-ink">
+                        {selected.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-ink">{p.name}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-ink-muted">{p.phone}</td>
+                    <td className="px-4 py-3">
+                      <div className="relative flex flex-wrap items-center gap-1">
+                        {pTags.map((t) => {
+                          const tagObj = tags.find((tag) => tag.name === t);
+                          return tagObj ? (
+                            <TagBadge
+                              key={t}
+                              name={tagObj.name}
+                              color={tagObj.color}
+                              onRemove={() => handleToggleTag(p.id, t, pTags)}
+                            />
+                          ) : null;
+                        })}
+                        <button
+                          onClick={() => setTagPopoverFor(tagPopoverFor === p.id ? null : p.id)}
+                          className="rounded px-1 py-0.5 text-[10px] text-ink-tertiary hover:bg-surface-2 hover:text-ink"
+                        >
+                          +
+                        </button>
+                        {tagPopoverFor === p.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setTagPopoverFor(null)} />
+                            <div className="absolute left-0 top-full z-50 mt-1 w-40 rounded-md border border-hairline bg-surface-1 py-1 shadow-lg">
+                              {tags.map((tag) => (
+                                <button
+                                  key={tag.id}
+                                  onClick={() => { handleToggleTag(p.id, tag.name, pTags); setTagPopoverFor(null); }}
+                                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-surface-2"
+                                >
+                                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                                  <span className={cn("text-ink", pTags.includes(tag.name) && "font-medium text-primary")}>
+                                    {tag.name}
+                                  </span>
+                                  {pTags.includes(tag.name) && <span className="ml-auto text-primary">✓</span>}
+                                </button>
+                              ))}
+                              {tags.length === 0 && (
+                                <p className="px-3 py-2 text-xs text-ink-subtle">Crée un tag d&apos;abord</p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={p.status}
+                        onChange={(e) => handleStatusChange(p.id, e.target.value)}
+                        className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", STATUS_LABELS[p.status]?.color)}
+                        style={{ background: "transparent" }}
+                      >
+                        {Object.entries(STATUS_LABELS).map(([key, val]) => (
+                          <option key={key} value={key}>{val.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={generateWhatsAppLink(p.phone, `Bonjour ${p.name} !`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md p-1.5 text-ink-subtle transition-colors hover:bg-success/20 hover:text-success"
+                          title="Envoyer WhatsApp"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </a>
+                        <button
+                          onClick={() => handleDelete(p.id)}
+                          className="rounded-md p-1.5 text-ink-subtle transition-colors hover:bg-destructive/20 hover:text-destructive"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-ink-subtle">
-            Page {page} sur {totalPages}
-          </p>
+          <p className="text-sm text-ink-subtle">Page {page} sur {totalPages}</p>
           <div className="flex gap-2">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-              className="rounded-md border border-hairline p-2 text-ink-subtle transition-colors hover:bg-surface-2 disabled:opacity-30"
-            >
+            <button onClick={() => handlePageChange(page - 1)} disabled={page <= 1} className="rounded-md border border-hairline p-2 text-ink-subtle transition-colors hover:bg-surface-2 disabled:opacity-30">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="rounded-md border border-hairline p-2 text-ink-subtle transition-colors hover:bg-surface-2 disabled:opacity-30"
-            >
+            <button onClick={() => handlePageChange(page + 1)} disabled={page >= totalPages} className="rounded-md border border-hairline p-2 text-ink-subtle transition-colors hover:bg-surface-2 disabled:opacity-30">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>

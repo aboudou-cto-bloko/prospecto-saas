@@ -93,3 +93,35 @@ export async function getProspects(filters?: {
 
   return { prospects, total, page, totalPages: Math.ceil(total / limit) };
 }
+
+export async function bulkDeleteProspects(ids: string[]) {
+  const { organizationId } = await requireRole("owner", "admin");
+
+  await prisma.prospect.deleteMany({
+    where: { id: { in: ids }, organizationId },
+  });
+
+  revalidatePath("/prospects");
+}
+
+export async function bulkUpdateStatus(ids: string[], status: ProspectStatus) {
+  const { organizationId } = await requireOrg();
+
+  await prisma.prospect.updateMany({
+    where: { id: { in: ids }, organizationId },
+    data: { status },
+  });
+
+  revalidatePath("/prospects");
+}
+
+export async function updateProspectTags(id: string, tags: string[]) {
+  const { organizationId } = await requireOrg();
+
+  await prisma.prospect.update({
+    where: { id, organizationId },
+    data: { tags: JSON.stringify(tags) },
+  });
+
+  revalidatePath("/prospects");
+}

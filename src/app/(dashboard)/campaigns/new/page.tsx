@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createCampaign } from "@/actions/campaigns";
+import { CustomFieldManager } from "@/components/custom-field-manager";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -66,10 +67,12 @@ export default function NewCampaignPage() {
             rows={6}
             className="w-full rounded-md border border-hairline bg-surface-1 px-3 py-2 text-sm text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          <p className="mt-1.5 text-xs text-ink-tertiary">
-            Variables disponibles : {"{{nom}}"}, {"{{telephone}}"} et les champs
-            personnalisés
-          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <p className="text-xs text-ink-tertiary">
+              Variables : {"{{nom}}"}, {"{{telephone}}"} + personnalisées
+            </p>
+            <CustomFieldManager />
+          </div>
         </div>
 
         <div className="flex gap-3">
