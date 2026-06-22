@@ -23,9 +23,26 @@ export async function requireSession() {
 
 export async function requireOrg() {
   const session = await requireSession();
-  const orgId = session.session.activeOrganizationId;
+  let orgId = session.session.activeOrganizationId;
+
   if (!orgId) {
-    throw new Error("Aucune organisation active");
+    const membership = await prisma.member.findFirst({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    if (!membership) {
+      throw new Error("Aucune organisation active");
+    }
+    orgId = membership.organizationId;
+
+    try {
+      await auth.api.setActiveOrganization({
+        headers: await headers(),
+        body: { organizationId: orgId },
+      });
+    } catch {
+      // non-blocking
+    }
   }
 
   const member = await prisma.member.findUnique({
