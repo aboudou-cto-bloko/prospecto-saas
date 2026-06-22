@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink, organization } from "better-auth/plugins";
 import { prisma } from "./prisma";
+import React from "react";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
@@ -10,10 +11,11 @@ export const auth = betterAuth({
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
       const { sendMail } = await import("./mailer");
+      const { ResetPasswordEmail } = await import("../emails/reset-password");
       await sendMail(
         user.email,
         "Réinitialise ton mot de passe — Prospecto",
-        `<p>Salut ${user.name},</p><p><a href="${url}">Clique ici pour réinitialiser ton mot de passe</a></p>`
+        React.createElement(ResetPasswordEmail, { url, name: user.name })
       );
     },
   },
@@ -23,10 +25,11 @@ export const auth = betterAuth({
       expiresIn: 60 * 5,
       sendMagicLink: async ({ email, url }) => {
         const { sendMail } = await import("./mailer");
+        const { MagicLinkEmail } = await import("../emails/magic-link");
         await sendMail(
           email,
           "Ton lien de connexion — Prospecto",
-          `<p><a href="${url}">Clique ici pour te connecter</a></p>`
+          React.createElement(MagicLinkEmail, { url, email })
         );
       },
     }),
@@ -36,15 +39,40 @@ export const auth = betterAuth({
       invitationExpiresIn: 48 * 60 * 60,
       sendInvitationEmail: async ({ invitation, organization: org }) => {
         const { sendMail } = await import("./mailer");
+        const { InvitationEmail } = await import("../emails/invitation");
         const url = `${process.env.BETTER_AUTH_URL}/accept-invitation/${invitation.id}`;
         await sendMail(
           invitation.email,
           `Rejoins ${org.name} sur Prospecto`,
-          `<p>Tu as été invité(e) à rejoindre <strong>${org.name}</strong> sur Prospecto.</p><p><a href="${url}">Accepter l'invitation</a></p>`
+          React.createElement(InvitationEmail, {
+            orgName: org.name,
+            inviterName: invitation.inviterId,
+            url,
+          })
         );
       },
     }),
   ],
+
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            const { sendMail } = await import("./mailer");
+            const { WelcomeEmail } = await import("../emails/welcome");
+            await sendMail(
+              user.email,
+              `Bienvenue sur Prospecto, ${user.name}`,
+              React.createElement(WelcomeEmail, { name: user.name })
+            );
+          } catch {
+            // Never block user creation
+          }
+        },
+      },
+    },
+  },
 
   session: {
     expiresIn: 60 * 60 * 24 * 7,
