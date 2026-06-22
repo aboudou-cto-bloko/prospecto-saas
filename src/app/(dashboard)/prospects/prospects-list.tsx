@@ -22,12 +22,15 @@ import {
   CheckSquare,
   Square,
   X,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TagBadge } from "@/components/tag-badge";
 import { TagManager } from "@/components/tag-manager";
 import { EmptyState } from "@/components/empty-state";
+import { ProspectDetailSheet } from "@/components/prospect-detail-sheet";
+import { ImportCsvDialog } from "@/components/import-csv-dialog";
 import type { Prospect, Tag } from "@/generated/prisma/client";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -51,6 +54,8 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tagPopoverFor, setTagPopoverFor] = useState<string | null>(null);
@@ -214,6 +219,14 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
         <TagManager />
 
         <button
+          onClick={() => setShowImport(true)}
+          className="flex items-center gap-2 rounded-md border border-hairline px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-surface-2"
+        >
+          <Upload className="h-4 w-4" />
+          CSV
+        </button>
+
+        <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
@@ -317,7 +330,14 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
                         {selected.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-ink">{p.name}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setDetailProspect(p)}
+                        className="text-ink transition-colors hover:text-primary"
+                      >
+                        {p.name}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 font-mono text-xs text-ink-muted">{p.phone}</td>
                     <td className="px-4 py-3">
                       <div className="relative flex flex-wrap items-center gap-1">
@@ -416,6 +436,19 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
             </button>
           </div>
         </div>
+      )}
+
+      {/* Prospect detail sheet */}
+      {detailProspect && (
+        <ProspectDetailSheet
+          prospect={detailProspect}
+          onClose={() => setDetailProspect(null)}
+        />
+      )}
+
+      {/* Import CSV dialog */}
+      {showImport && (
+        <ImportCsvDialog onClose={() => setShowImport(false)} />
       )}
     </div>
   );

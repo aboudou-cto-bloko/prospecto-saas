@@ -125,3 +125,67 @@ export async function updateProspectTags(id: string, tags: string[]) {
 
   revalidatePath("/prospects");
 }
+
+export async function updateProspect(
+  id: string,
+  data: {
+    name?: string;
+    phone?: string;
+    website?: string;
+    category?: string;
+    notes?: string;
+    metadata?: Record<string, string>;
+  }
+) {
+  const { organizationId } = await requireOrg();
+
+  await prisma.prospect.update({
+    where: { id, organizationId },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.website !== undefined && { website: data.website || null }),
+      ...(data.category !== undefined && { category: data.category || null }),
+      ...(data.notes !== undefined && { notes: data.notes || null }),
+      ...(data.metadata !== undefined && { metadata: data.metadata }),
+    },
+  });
+
+  revalidatePath("/prospects");
+}
+
+export async function getProspect(id: string) {
+  const { organizationId } = await requireOrg();
+  return prisma.prospect.findFirstOrThrow({
+    where: { id, organizationId },
+  });
+}
+
+export async function importProspects(
+  rows: { name: string; phone: string; metadata?: Record<string, string> }[]
+) {
+  const { organizationId, user } = await requireOrg();
+  await assertProspectLimit(organizationId, rows.length);
+
+  let added = 0;
+  for (const row of rows) {
+    try {
+      await prisma.prospect.create({
+        data: {
+          name: row.name,
+          phone: row.phone,
+          source: "OTHER",
+          organizationId,
+          createdById: user.id,
+          metadata: row.metadata ?? undefined,
+        },
+      });
+      added++;
+    } catch {
+      // duplicate phone — skip
+    }
+  }
+
+  revalidatePath("/prospects");
+  return { added, total: rows.length, skipped: rows.length - added };
+}
