@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = [
+  "/",
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
   "/verify-magic-link",
-  "/landing",
   "/pricing",
   "/api/auth",
   "/api/webhook",
@@ -15,7 +15,7 @@ const PUBLIC_PATHS = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  if (pathname === "/" || PUBLIC_PATHS.some((p) => p !== "/" && pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
@@ -31,5 +31,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon|screenshots|logo).*)"],
 };
