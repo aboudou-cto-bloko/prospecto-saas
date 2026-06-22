@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getOrgPlanLimits, getSubscription } from "@/lib/subscription";
 
-export class LimitError extends Error {
+class LimitError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "LimitError";
