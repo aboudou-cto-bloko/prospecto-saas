@@ -34,15 +34,6 @@ export async function requireOrg() {
       throw new Error("Aucune organisation active");
     }
     orgId = membership.organizationId;
-
-    try {
-      await auth.api.setActiveOrganization({
-        headers: await headers(),
-        body: { organizationId: orgId },
-      });
-    } catch {
-      // non-blocking
-    }
   }
 
   const member = await prisma.member.findUnique({
