@@ -140,13 +140,23 @@ export function ImportCsvDialog({ onClose }: Props) {
               <p className="mb-6 text-xs text-ink-subtle">
                 Colonnes attendues : nom, telephone + tes variables personnalisées
               </p>
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
-              >
-                <Upload className="mr-2 inline h-4 w-4" />
-                Choisir un fichier
-              </button>
+              <div className="mb-6 flex items-center gap-3">
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+                >
+                  <Upload className="mr-2 inline h-4 w-4" />
+                  Choisir un fichier
+                </button>
+                <a
+                  href="/exemple-import.csv"
+                  download
+                  className="rounded-md border border-hairline px-4 py-2 text-sm text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink"
+                >
+                  <FileSpreadsheet className="mr-2 inline h-4 w-4" />
+                  Fichier exemple
+                </a>
+              </div>
               <input
                 ref={fileRef}
                 type="file"
