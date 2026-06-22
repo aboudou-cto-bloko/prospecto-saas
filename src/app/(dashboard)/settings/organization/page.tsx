@@ -9,53 +9,75 @@ import {
 import { UserPlus, Trash2, Shield } from "lucide-react";
 import { toast } from "sonner";
 
+type MemberEntry = {
+  id: string;
+  userId: string;
+  role: string;
+  user: { name: string; email: string };
+};
+
 export default function OrganizationSettingsPage() {
   const { data: org, isPending: orgLoading } = useActiveOrganization();
   const { data: session } = useSession();
   const [isPending, startTransition] = useTransition();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
-  const [members, setMembers] = useState<
-    { id: string; userId: string; role: string; user: { name: string; email: string } }[]
-  >([]);
+  const [members, setMembers] = useState<MemberEntry[]>([]);
 
   useEffect(() => {
     if (!org?.id) return;
     authClient.organization
       .listMembers({ query: { organizationId: org.id } })
-      .then((res: { data?: unknown }) => {
-        if (res.data) setMembers(res.data as typeof members);
-      });
+      .then((res) => {
+        const data = res.data as unknown as
+          | { members?: MemberEntry[] }
+          | MemberEntry[]
+          | null;
+        if (Array.isArray(data)) {
+          setMembers(data);
+        } else if (data && Array.isArray(data.members)) {
+          setMembers(data.members);
+        }
+      })
+      .catch(() => {});
   }, [org?.id]);
 
   function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     if (!org?.id) return;
     startTransition(async () => {
-      const result = await authClient.organization.inviteMember({
-        organizationId: org.id,
-        email: inviteEmail,
-        role: inviteRole as "admin" | "member",
-      });
-      if (result.error) {
-        toast.error(result.error.message ?? "Erreur");
-      } else {
-        toast.success(`Invitation envoyée à ${inviteEmail}`);
-        setInviteEmail("");
+      try {
+        const result = await authClient.organization.inviteMember({
+          organizationId: org.id,
+          email: inviteEmail,
+          role: inviteRole as "admin" | "member",
+        });
+        if (result.error) {
+          toast.error(result.error.message ?? "Erreur");
+        } else {
+          toast.success(`Invitation envoyée à ${inviteEmail}`);
+          setInviteEmail("");
+        }
+      } catch {
+        toast.error("Erreur lors de l'invitation");
       }
     });
   }
 
   function handleRemoveMember(memberId: string) {
     startTransition(async () => {
-      const result = await authClient.organization.removeMember({
-        memberIdOrEmail: memberId,
-      });
-      if (result.error) {
-        toast.error(result.error.message ?? "Erreur");
-      } else {
-        setMembers((prev) => prev.filter((m) => m.id !== memberId));
-        toast.success("Membre retiré");
+      try {
+        const result = await authClient.organization.removeMember({
+          memberIdOrEmail: memberId,
+        });
+        if (result.error) {
+          toast.error(result.error.message ?? "Erreur");
+        } else {
+          setMembers((prev) => prev.filter((m) => m.id !== memberId));
+          toast.success("Membre retiré");
+        }
+      } catch {
+        toast.error("Erreur lors du retrait");
       }
     });
   }
@@ -75,7 +97,8 @@ export default function OrganizationSettingsPage() {
         Organisation
       </h1>
       <p className="mt-1 text-sm text-ink-subtle">
-        Gère les membres de <span className="text-ink">{org?.name}</span>
+        Gère les membres de{" "}
+        <span className="text-ink">{org?.name ?? "..."}</span>
       </p>
 
       <div className="mt-8 max-w-2xl space-y-8">
@@ -113,7 +136,7 @@ export default function OrganizationSettingsPage() {
 
         <div className="rounded-lg border border-hairline bg-surface-1 p-6">
           <h2 className="text-lg font-semibold tracking-card-title text-ink">
-            Membres
+            Membres ({members.length})
           </h2>
           <div className="mt-4 divide-y divide-hairline">
             {members.map((m) => (
@@ -144,6 +167,11 @@ export default function OrganizationSettingsPage() {
                 </div>
               </div>
             ))}
+            {members.length === 0 && !orgLoading && (
+              <p className="py-4 text-center text-sm text-ink-subtle">
+                Aucun membre trouvé
+              </p>
+            )}
           </div>
         </div>
       </div>
