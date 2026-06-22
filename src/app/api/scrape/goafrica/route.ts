@@ -8,6 +8,7 @@ import { z } from "zod";
 const scrapeSchema = z.object({
   sector: z.string().min(1),
   city: z.string().min(1),
+  countryCode: z.string().min(2).max(2).default("bj"),
   maxPages: z.number().int().min(1).max(10).default(3),
 });
 
@@ -21,9 +22,10 @@ type ScrapedProspect = {
 async function scrapeGoAfricaPage(
   sector: string,
   city: string,
+  countryCode: string,
   page: number
 ): Promise<ScrapedProspect[]> {
-  const url = `https://www.goafricaonline.com/bj/${encodeURIComponent(city)}/${encodeURIComponent(sector)}?page=${page}`;
+  const url = `https://www.goafricaonline.com/${countryCode}/${encodeURIComponent(city)}/${encodeURIComponent(sector)}?page=${page}`;
   const res = await fetch(url, {
     headers: {
       "User-Agent":
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     const allProspects: ScrapedProspect[] = [];
     for (let page = 1; page <= body.maxPages; page++) {
-      const results = await scrapeGoAfricaPage(body.sector, body.city, page);
+      const results = await scrapeGoAfricaPage(body.sector, body.city, body.countryCode, page);
       allProspects.push(...results);
       if (results.length === 0) break;
     }
