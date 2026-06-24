@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireOrg, requireRole } from "@/lib/org-context";
 import { assertProspectLimit } from "@/lib/limits";
+import { consumeCredits } from "@/lib/credits";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ProspectStatus, Source } from "@/generated/prisma/client";
@@ -165,6 +166,7 @@ export async function importProspects(
   rows: { name: string; phone: string; metadata?: Record<string, string> }[]
 ) {
   const { organizationId, user } = await requireOrg();
+  await consumeCredits(organizationId, "IMPORT_CSV_PER_ROW", rows.length);
   await assertProspectLimit(organizationId, rows.length);
 
   let added = 0;

@@ -9,5 +9,5 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" },
     });
     return NextResponse.json({ tags });
-  }, 0);
+  });
 }

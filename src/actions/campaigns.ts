@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireOrg, requireRole } from "@/lib/org-context";
 import { assertCampaignLimit } from "@/lib/limits";
+import { consumeCredits } from "@/lib/credits";
 import { generateWhatsAppLink, renderTemplate } from "@/lib/template";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -19,6 +20,7 @@ export async function createCampaign(data: z.input<typeof createCampaignSchema>)
   const parsed = createCampaignSchema.parse(data);
 
   await assertCampaignLimit(organizationId);
+  await consumeCredits(organizationId, "CAMPAIGN_CREATE");
 
   const campaign = await prisma.campaign.create({
     data: {
@@ -50,6 +52,8 @@ export async function addProspectsToCampaign(campaignId: string, prospectIds: st
   await prisma.campaign.findFirstOrThrow({
     where: { id: campaignId, organizationId },
   });
+
+  await consumeCredits(organizationId, "CAMPAIGN_ADD_PROSPECT", prospectIds.length);
 
   await prisma.campaignProspect.createMany({
     data: prospectIds.map((prospectId) => ({
@@ -88,6 +92,10 @@ export async function generateWhatsAppLinks(campaignId: string) {
       },
     },
   });
+
+  if (campaign.prospects.length > 0) {
+    await consumeCredits(organizationId, "WHATSAPP_LINK", campaign.prospects.length);
+  }
 
   return campaign.prospects.map((cp) => {
     const variables: Record<string, string> = {

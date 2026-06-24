@@ -56,5 +56,5 @@ export async function POST(req: NextRequest) {
       added,
       skipped: leads.length - added,
     });
-  }, 5);
+  }, "MCP_SCRAPE");
 }

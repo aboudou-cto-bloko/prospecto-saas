@@ -33,5 +33,5 @@ export async function GET(req: NextRequest) {
       messages: { used: messagesThisMonth, limit: limits.messagesPerMonth },
       limits,
     });
-  }, 0);
+  });
 }

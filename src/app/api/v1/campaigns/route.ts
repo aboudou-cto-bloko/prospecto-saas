@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
       include: { _count: { select: { prospects: true } } },
     });
     return NextResponse.json({ campaigns });
-  }, 0);
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -23,5 +23,5 @@ export async function POST(req: NextRequest) {
       data: { name, template, organizationId, createdById: userId },
     });
     return NextResponse.json({ campaign }, { status: 201 });
-  }, 1);
+  }, "MCP_WRITE");
 }

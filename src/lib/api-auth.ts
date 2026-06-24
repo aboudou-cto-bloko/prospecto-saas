@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "./api-key";
 import { prisma } from "./prisma";
+import { consumeCredits, InsufficientCreditsError, type CreditAction } from "./credits";
 
 export type ApiContext = {
   organizationId: string;
@@ -10,7 +11,8 @@ export type ApiContext = {
 export async function withApiKey(
   req: NextRequest,
   handler: (ctx: ApiContext) => Promise<NextResponse>,
-  creditCost = 1
+  creditAction?: CreditAction,
+  quantity = 1
 ): Promise<NextResponse> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -39,11 +41,18 @@ export async function withApiKey(
     );
   }
 
-  if (creditCost > 0) {
-    await prisma.subscription.update({
-      where: { organizationId: result.organizationId },
-      data: { scrapingCreditsUsed: { increment: creditCost } },
-    });
+  if (creditAction) {
+    try {
+      await consumeCredits(result.organizationId, creditAction, quantity);
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        return NextResponse.json(
+          { error: err.message, remaining: err.remaining, needed: err.needed },
+          { status: 402 }
+        );
+      }
+      throw err;
+    }
   }
 
   return handler({

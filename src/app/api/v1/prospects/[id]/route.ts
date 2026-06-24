@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
     if (!prospect) return NextResponse.json({ error: "Prospect non trouvé" }, { status: 404 });
     return NextResponse.json({ prospect });
-  }, 0);
+  });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     return NextResponse.json({ prospect });
-  }, 1);
+  }, "MCP_WRITE");
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -41,5 +41,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   return withApiKey(req, async ({ organizationId }) => {
     await prisma.prospect.delete({ where: { id, organizationId } });
     return NextResponse.json({ deleted: true });
-  }, 0);
+  });
 }

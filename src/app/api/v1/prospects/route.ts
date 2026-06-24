@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     return NextResponse.json({ prospects, total, page, totalPages: Math.ceil(total / limit) });
-  }, 0);
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -59,5 +59,5 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ prospect }, { status: 201 });
-  }, 1);
+  }, "MCP_WRITE");
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/org-context";
-import { assertProspectLimit, assertScrapingCredits, consumeScrapingCredits } from "@/lib/limits";
+import { assertProspectLimit } from "@/lib/limits";
+import { consumeCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 import { scrapeGoAfrica } from "@/lib/scraper/goafrica";
 import { z } from "zod";
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ added: 0, total: 0, message: "Aucun prospect trouvé" });
     }
 
-    await assertScrapingCredits(organizationId, leads.length);
+    await consumeCredits(organizationId, "SCRAPE_PER_PROSPECT", leads.length);
     await assertProspectLimit(organizationId, leads.length);
 
     let added = 0;
@@ -65,8 +66,6 @@ export async function POST(req: NextRequest) {
         // duplicate phone — skip
       }
     }
-
-    await consumeScrapingCredits(organizationId, leads.length);
 
     return NextResponse.json({
       added,
