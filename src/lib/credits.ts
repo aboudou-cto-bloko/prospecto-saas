@@ -1,7 +1,5 @@
-"use server";
-
 import { prisma } from "./prisma";
-import { getPlanLimits, getNextPlan, type PlanId } from "./plans";
+import { getPlanLimits, getNextPlan } from "./plans";
 
 export const CREDIT_COSTS = {
   SCRAPE_PER_PROSPECT: 2,
