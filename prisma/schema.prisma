@@ -83,6 +83,7 @@ model Organization {
   members      Member[]
   invitations  Invitation[]
   subscription Subscription?
+  apiKeys      ApiKey[]
   prospects    Prospect[]
   campaigns    Campaign[]
   tags         Tag[]
@@ -136,6 +137,24 @@ model Subscription {
   updatedAt            DateTime     @updatedAt
 
   @@map("subscription")
+}
+
+// ── API Keys ─────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdById    String
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("api_key")
 }
 
 // ── CRM ──────────────────────────────────────────────────────────────────────

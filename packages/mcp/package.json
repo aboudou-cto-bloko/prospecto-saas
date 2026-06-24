@@ -1,0 +1,23 @@
+{
+  "name": "prospecto-mcp",
+  "version": "1.0.0",
+  "description": "Serveur MCP pour Prospecto — Gère ton pipeline de prospection avec l'IA",
+  "type": "module",
+  "bin": {
+    "prospecto-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "keywords": ["mcp", "prospecto", "crm", "whatsapp", "goafrica", "prospection"],
+  "author": "François Aboudou Zinsou",
+  "license": "MIT"
+}

@@ -59,6 +59,7 @@ export const ModelName = {
   Member: 'Member',
   Invitation: 'Invitation',
   Subscription: 'Subscription',
+  ApiKey: 'ApiKey',
   Prospect: 'Prospect',
   Campaign: 'Campaign',
   CampaignProspect: 'CampaignProspect',
@@ -194,6 +195,21 @@ export const SubscriptionScalarFieldEnum = {
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const ApiKeyScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  name: 'name',
+  keyHash: 'keyHash',
+  keyPrefix: 'keyPrefix',
+  lastUsedAt: 'lastUsedAt',
+  expiresAt: 'expiresAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+} as const
+
+export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum]
 
 
 export const ProspectScalarFieldEnum = {

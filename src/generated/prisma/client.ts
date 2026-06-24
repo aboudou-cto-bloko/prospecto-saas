@@ -82,6 +82,11 @@ export type Invitation = Prisma.InvitationModel
  */
 export type Subscription = Prisma.SubscriptionModel
 /**
+ * Model ApiKey
+ * 
+ */
+export type ApiKey = Prisma.ApiKeyModel
+/**
  * Model Prospect
  * 
  */
