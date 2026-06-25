@@ -44,7 +44,7 @@ const features = [
     tag: "Envoyer",
     title: "Campagnes WhatsApp personnalisées",
     desc: "Rédigez un template avec des variables dynamiques — {{nom}}, {{telephone}}. Prospecto génère un lien WhatsApp pré-rempli pour chaque prospect.",
-    bullets: ["Variables dynamiques illimitées", "Lien wa.me/ par prospect", "Suivi envoyé / non envoyé"],
+    bullets: ["Variables dynamiques illimitées", "Lien wa.me/ gratuit par prospect", "Envoi automatisé WhatsApp — bientôt"],
     screenshot: "/screenshots/campaigns.png",
   },
 ];
@@ -70,7 +70,7 @@ const faqs = [
   },
   {
     q: "Comment fonctionne l'envoi WhatsApp ?",
-    a: "Prospecto génère un lien wa.me/ pré-rempli pour chaque prospect. Un clic ouvre WhatsApp avec le message personnalisé prêt à envoyer. Simple, fiable, sans risque de ban.",
+    a: "Prospecto génère un lien wa.me/ pré-rempli pour chaque prospect — gratuit, sans consommation de crédits. Un clic ouvre WhatsApp avec le message personnalisé prêt à envoyer. L'envoi automatisé directement depuis WhatsApp arrive bientôt.",
   },
   {
     q: "Que se passe-t-il si j'atteins mes limites ?",

@@ -26,8 +26,12 @@ export default async function CampaignsPage() {
         Campagnes
       </h1>
       <p className="mt-1 text-sm text-ink-subtle">
-        Gère tes campagnes WhatsApp
+        Gère tes campagnes WhatsApp — envoi via liens wa.me/ (gratuit, sans crédits)
       </p>
+      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-[13px] text-ink-subtle">
+        <span className="mr-1.5 font-medium text-primary">Bientôt</span>
+        L&apos;envoi automatisé directement depuis WhatsApp arrive prochainement. En attendant, chaque lien wa.me/ ouvre la conversation pré-remplie dans WhatsApp.
+      </div>
       <CampaignsList campaigns={campaigns} />
     </div>
   );

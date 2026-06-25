@@ -4,9 +4,9 @@ import { getPlanLimits, getNextPlan } from "./plans";
 export const CREDIT_COSTS = {
   SCRAPE_PER_PROSPECT: 2,
   IMPORT_CSV_PER_ROW: 1,
-  WHATSAPP_LINK: 1,
+  WHATSAPP_LINK: 0,
   CAMPAIGN_CREATE: 3,
-  CAMPAIGN_ADD_PROSPECT: 1,
+  CAMPAIGN_ADD_PROSPECT: 0,
   EXPORT_CSV: 10,
   MCP_WRITE: 1,
   MCP_SCRAPE: 5,
