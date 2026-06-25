@@ -17,9 +17,11 @@ export default async function ProspectsPage({
     | "CONVERTED"
     | "LOST"
     | undefined;
+  const sort = params.sort;
+  const order = (params.order === "asc" ? "asc" : params.order === "desc" ? "desc" : undefined) as "asc" | "desc" | undefined;
 
   const [data, tags] = await Promise.all([
-    getProspects({ page, search, status }),
+    getProspects({ page, search, status, sort, order }),
     getTags(),
   ]);
 

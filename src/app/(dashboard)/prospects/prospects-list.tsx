@@ -23,6 +23,9 @@ import {
   Square,
   X,
   Upload,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -176,6 +179,43 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
     } catch { return []; }
   }
 
+  const currentSort = searchParams.get("sort") ?? "createdAt";
+  const currentOrder = (searchParams.get("order") ?? "desc") as "asc" | "desc";
+
+  function handleSort(field: string) {
+    const params = new URLSearchParams(searchParams);
+    if (currentSort === field) {
+      params.set("order", currentOrder === "asc" ? "desc" : "asc");
+    } else {
+      params.set("sort", field);
+      params.set("order", "asc");
+    }
+    params.set("page", "1");
+    router.push(`/prospects?${params.toString()}`);
+  }
+
+  function SortableHeader({ field, label }: { field: string; label: string }) {
+    const active = currentSort === field;
+    return (
+      <th className="px-4 py-3 font-medium">
+        <button
+          onClick={() => handleSort(field)}
+          className={cn(
+            "inline-flex items-center gap-1 transition-colors hover:text-ink",
+            active && "text-ink"
+          )}
+        >
+          {label}
+          {active ? (
+            currentOrder === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+          ) : (
+            <ArrowUpDown className="h-3 w-3 opacity-40" />
+          )}
+        </button>
+      </th>
+    );
+  }
+
   async function handleToggleTag(prospectId: string, tagName: string, currentTags: string[]) {
     const removing = currentTags.includes(tagName);
     const newTags = removing
@@ -322,10 +362,11 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
                     {allSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">Nom</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
+                <SortableHeader field="name" label="Nom" />
+                <SortableHeader field="phone" label="Téléphone" />
                 <th className="px-4 py-3 font-medium">Tags</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
+                <SortableHeader field="status" label="Statut" />
+                <SortableHeader field="createdAt" label="Date" />
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -403,6 +444,9 @@ export function ProspectsList({ prospects, tags, total, page, totalPages }: Prop
                           <option key={key} value={key}>{val.label}</option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-ink-muted">
+                      {new Date(p.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

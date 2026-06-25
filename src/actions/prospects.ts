@@ -64,10 +64,17 @@ export async function getProspects(filters?: {
   search?: string;
   page?: number;
   limit?: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }) {
   const { organizationId } = await requireOrg();
   const page = filters?.page ?? 1;
   const limit = filters?.limit ?? 50;
+
+  const sortField = filters?.sort ?? "createdAt";
+  const sortOrder = filters?.order ?? "desc";
+  const allowedSorts = ["name", "phone", "status", "createdAt", "category"];
+  const safeSort = allowedSorts.includes(sortField) ? sortField : "createdAt";
 
   const where = {
     organizationId,
@@ -85,7 +92,7 @@ export async function getProspects(filters?: {
   const [prospects, total] = await Promise.all([
     prisma.prospect.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { [safeSort]: sortOrder },
       skip: (page - 1) * limit,
       take: limit,
     }),
